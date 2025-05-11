@@ -130,5 +130,5 @@ Railway tự gắn SSL; trỏ DNS CNAME → subdomain Railway là hoàn tất.
 ---
 
 🎯 **Pull request** welcome!  
-Vui lòng xem thêm hướng dẫn trong [CONTRIBUTING.md](CONTRIBUTING.md).  
+Vui lòng xem thêm hướng dẫn trong [Modeling.md](Modeling.md).  
 Happy coding! 🎉
