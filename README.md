@@ -2,52 +2,53 @@
 
 ## 1. Giới thiệu
 **Clinic-Manager** là hệ thống quản lý hồ sơ bệnh án chạy trên Django 5 (Python 3.13) giúp:
-- **Nhập liệu & lưu trữ** hồ sơ bệnh án tập trung (PostgreSQL).  
-- **Tra cứu nhanh** theo tên, mã bệnh nhân… trên web & di động (Bootstrap 5, responsive).  
-- **Xuất bản in ấn**: kết xuất PDF chuẩn (ReportLab) và tải về trên cả PC lẫn mobile.  
-- **Theo dõi hoạt động nhân sự**: đăng nhập, phân quyền, log thao tác.  
+- **Nhập liệu & lưu trữ** hồ sơ bệnh án tập trung (PostgreSQL).
+- **Tra cứu nhanh** theo tên, mã bệnh nhân… trên web & di động (Bootstrap 5, responsive).
+- **Xuất bản in ấn**: kết xuất PDF chuẩn (ReportLab) và tải về trên cả PC lẫn mobile.
+- **Theo dõi hoạt động nhân sự**: đăng nhập, phân quyền, log thao tác.
 - **Triển khai cloud-native**: Railway (app), Amazon S3 (lưu trữ file), 2 môi trường Dev / Production.
 
 ---
 
 ## 2. Cây thư mục
 
+```
 clinic-manager/
-├─ manage.py # Entrypoint Django
+├─ manage.py                # Entrypoint Django
 ├─ README.md
-├─ requirements/ # File lock/packages phụ thuộc
-│ ├─ base.txt # Chung
-│ ├─ dev.txt # Dev extras (debug-toolbar…)
-│ └─ prod.txt # Gunicorn, Whitenoise…
+├─ requirements/            # File lock/packages phụ thuộc
+│  ├─ base.txt              # Chung
+│  ├─ dev.txt               # Dev extras (debug-toolbar…)
+│  └─ prod.txt              # Gunicorn, Whitenoise…
 │
-├─ config/ # Project package
-│ ├─ asgi.py / wsgi.py
-│ ├─ urls.py
-│ └─ settings/ # Tách settings
-|   ├─ init.py # Đọc env DJANGO_ENV
-|   ├─ base.py # Chung
-|   ├─ local.py # Dev
-|   └─ production.py # Prod
+├─ config/                  # Project package
+│  ├─ asgi.py / wsgi.py
+│  ├─ urls.py
+│  └─ settings/             # Tách settings
+│     ├─ __init__.py        # Đọc env DJANGO_ENV
+│     ├─ base.py            # Chung
+│     ├─ local.py           # Dev
+│     └─ production.py      # Prod
 │
-├─ apps/ # Business apps (Two-Scoops style)
-│ ├─ accounts/ # CustomUser, phân quyền
-│ ├─ patients/ # Thông tin bệnh nhân
-│ ├─ medical_records/ # CRUD & tìm kiếm hồ sơ
-│ ├─ reports/ # Xuất PDF, upload S3
-│ └─ dashboard/ # Thống kê, biểu đồ
+├─ apps/                    # Business apps (Two-Scoops style)
+│  ├─ accounts/            # CustomUser, phân quyền
+│  ├─ patients/            # Thông tin bệnh nhân
+│  ├─ medical_records/     # CRUD & tìm kiếm hồ sơ
+│  ├─ reports/             # Xuất PDF, upload S3
+│  └─ dashboard/           # Thống kê, biểu đồ
 │
-├─ templates/ # Base layout + component chung
-└─ static/ # Bootstrap, JS, ảnh tĩnh
-
+├─ templates/              # Base layout + component chung
+└─ static/                 # Bootstrap, JS, ảnh tĩnh
+```
 
 **Giải thích nhanh**
 
-| Thư mục / file      | Vai trò                                                                                                                                      |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| `config/settings/*` | Phân chia _base / local / production_ ⇒ dễ tùy biến cho nhiều môi trường, tránh “if DEBUG:” rải rác.                                         |
-| `apps/`             | Mỗi **app** gói trọn models, views, urls, tests → tái sử dụng & maintain dễ.                                                                 |
-| `templates/`        | Giao diện chung (_base.html_, partials) – override/extend templates của app khi cần.                                                         |
-| `requirements/`     | **base.txt** = bắt buộc; **dev.txt** & **prod.txt** _pip-tools_ có thể include `-r base.txt` để lắp ghép nhanh.                              |
+| Thư mục / file      | Vai trò                                                                                                        |
+|---------------------|-----------------------------------------------------------------------------------------------------------------|
+| `config/settings/*` | Phân chia _base / local / production_ ⇒ dễ tùy biến cho nhiều môi trường, tránh “if DEBUG:” rải rác.            |
+| `apps/`             | Mỗi **app** gói trọn models, views, urls, tests → tái sử dụng & maintain dễ.                                 |
+| `templates/`        | Giao diện chung (_base.html_, partials) – override/extend templates của app khi cần.                            |
+| `requirements/`     | **base.txt** = bắt buộc; **dev.txt** & **prod.txt** _pip-tools_ có thể include `-r base.txt` để lắp ghép nhanh.  |
 
 ---
 
@@ -55,12 +56,12 @@ clinic-manager/
 
 | Biến                   | Mặc định | Mô tả                                                         |
 |------------------------|----------|--------------------------------------------------------------|
-| `DJANGO_ENV`          | `local`  | `local` / `production` – quyết định file settings nạp.       |
-| `DJANGO_SECRET_KEY`   | _unsafe_ | Bắt buộc đổi ở production.                                   |
-| `DJANGO_ALLOWED_HOSTS`| `""`     | CSV hostnames (vd: `clinic.example.com,127.0.0.1`).          |
-| `POSTGRES_*`          | …        | `DB, USER, PASSWORD, HOST, PORT` cho PostgreSQL.             |
-| `AWS_ACCESS_KEY_ID`   |          | Truy cập S3 (lưu PDF).                                       |
-| `AWS_S3_BUCKET_NAME`  |          | Bucket đích.                                                 |
+| `DJANGO_ENV`           | `local`  | `local` / `production` – quyết định file settings nạp.       |
+| `DJANGO_SECRET_KEY`    | _unsafe_ | Bắt buộc đổi ở production.                                   |
+| `DJANGO_ALLOWED_HOSTS` | `""`     | CSV hostnames (vd: `clinic.example.com,127.0.0.1`).          |
+| `POSTGRES_*`           | …        | `DB, USER, PASSWORD, HOST, PORT` cho PostgreSQL.             |
+| `AWS_ACCESS_KEY_ID`    |          | Truy cập S3 (lưu PDF).                                       |
+| `AWS_S3_BUCKET_NAME`   |          | Bucket đích.                                                 |
 
 > **Production hardening** đã bật: `SECURE_SSL_REDIRECT`, cookie secure, WhiteNoise nén static, v.v.
 
@@ -97,9 +98,11 @@ python manage.py createsuperuser
 python manage.py runserver
 
 Truy cập http://127.0.0.1:8000/ và http://127.0.0.1:8000/admin/.
+```
 
 ### 4.2 Deploy Production (Railway) - Lưu ý các bước này không được tự ý thực hiện
 
+```cmd
 railway login
 railway init --python
 
@@ -113,6 +116,7 @@ railway run "python manage.py migrate"
 railway run "python manage.py collectstatic --noinput"
 
 Railway tự gắn SSL; trỏ DNS CNAME → subdomain Railway là hoàn tất.
+```
 
 ## 5. Đóng góp & Lộ trình
 
@@ -126,8 +130,5 @@ Railway tự gắn SSL; trỏ DNS CNAME → subdomain Railway là hoàn tất.
 ---
 
 🎯 **Pull request** welcome!  
-Vui lòng xem thêm hướng dẫn trong [README.md](README.md)
-
----
-
+Vui lòng xem thêm hướng dẫn trong [CONTRIBUTING.md](CONTRIBUTING.md).  
 Happy coding! 🎉
