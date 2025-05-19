@@ -6,6 +6,8 @@ from django.db.models import Q, Max
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from .models import LabTestTemplate, LabTestTemplateField, LabTest, LabTestResultValue, LabTestVersion
+from apps.patients.models import Patient # Import Patient model
+from apps.medical_records.models import MedicalRecord # Import MedicalRecord model
 from .forms import (
     LabTestTemplateForm, 
     LabTestTemplateFieldFormSet, 
@@ -13,7 +15,7 @@ from .forms import (
     LabTestResultValueFormSet
 )
 from django.utils import timezone
-import io
+import io # Đảm bảo import này có mặt
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm, mm
@@ -23,12 +25,12 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
-from django.conf import settings
+from django.conf import settings # Sửa lỗi import ở đây
 from reportlab.lib.utils import ImageReader
 
-# --- Views cho LabTestTemplate và AJAX (giữ nguyên như trước) ---
+# --- Views cho LabTestTemplate ---
 @login_required
-def lab_test_template_list(request): # ... (giữ nguyên) ...
+def lab_test_template_list(request):
     query = request.GET.get('q', '')
     templates_queryset = LabTestTemplate.objects.select_related('created_by').all()
     if query:
@@ -43,7 +45,7 @@ def lab_test_template_list(request): # ... (giữ nguyên) ...
     return render(request, 'labtests/lab_test_template_list.html', context)
 
 @login_required
-def lab_test_template_create(request): # ... (giữ nguyên) ...
+def lab_test_template_create(request):
     if request.method == 'POST':
         form = LabTestTemplateForm(request.POST)
         formset = LabTestTemplateFieldFormSet(request.POST, prefix='fields')
@@ -60,6 +62,7 @@ def lab_test_template_create(request): # ... (giữ nguyên) ...
                     return redirect('labtests:lab_test_template_list')
             except Exception as e:
                 messages.error(request, f"Có lỗi xảy ra khi lưu mẫu xét nghiệm: {e}")
+                print(f"Lỗi Exception khi lưu mẫu xét nghiệm: {e}") 
         else:
             messages.error(request, "Vui lòng sửa các lỗi trong form chính và/hoặc các chỉ số của mẫu xét nghiệm.")
             print("Lỗi Form Mẫu Xét Nghiệm (POST CREATE):", form.errors.as_json(escape_html=True))
@@ -77,7 +80,7 @@ def lab_test_template_create(request): # ... (giữ nguyên) ...
     return render(request, 'labtests/lab_test_template_form.html', context)
 
 @login_required
-def lab_test_template_update(request, pk): # ... (giữ nguyên) ...
+def lab_test_template_update(request, pk):
     template_instance = get_object_or_404(LabTestTemplate, pk=pk)
     if request.method == 'POST':
         form = LabTestTemplateForm(request.POST, instance=template_instance)
@@ -91,6 +94,7 @@ def lab_test_template_update(request, pk): # ... (giữ nguyên) ...
                     return redirect('labtests:lab_test_template_list')
             except Exception as e:
                 messages.error(request, f"Có lỗi xảy ra khi cập nhật mẫu xét nghiệm: {e}")
+                print(f"Lỗi Exception khi cập nhật mẫu xét nghiệm: {e}")
         else:
             messages.error(request, "Vui lòng sửa các lỗi trong form chính và/hoặc các chỉ số của mẫu xét nghiệm.")
             print("Lỗi Form Cập Nhật Mẫu Xét Nghiệm (POST UPDATE):", form.errors.as_json(escape_html=True))
@@ -109,7 +113,7 @@ def lab_test_template_update(request, pk): # ... (giữ nguyên) ...
     return render(request, 'labtests/lab_test_template_form.html', context)
 
 @login_required
-def lab_test_template_delete(request, pk): # ... (giữ nguyên) ...
+def lab_test_template_delete(request, pk):
     template_instance = get_object_or_404(LabTestTemplate, pk=pk)
     template_name = template_instance.name
     if request.method == 'POST':
@@ -130,8 +134,9 @@ def lab_test_template_delete(request, pk): # ... (giữ nguyên) ...
     }
     return render(request, 'labtests/lab_test_template_confirm_delete.html', context)
 
+# --- Views cho LabTest và LabTestResultValue ---
 @login_required
-def ajax_get_template_fields(request, template_id): # ... (giữ nguyên) ...
+def ajax_get_template_fields(request, template_id):
     try:
         template = LabTestTemplate.objects.get(pk=template_id)
         fields_data = list(template.fields.all().order_by('field_order').values(
@@ -145,52 +150,77 @@ def ajax_get_template_fields(request, template_id): # ... (giữ nguyên) ...
 
 @login_required
 def lab_test_create_and_enter_results(request):
+    # ... (Nội dung hàm này giữ nguyên như phiên bản trước - ID: labtest_views_py_save_display_final_fix_v6) ...
+    # (Đảm bảo đã sửa lỗi lưu và hiển thị kết quả như đã thảo luận)
+    patient_id_from_url = request.GET.get('patient_id')
+    selected_patient = None
+    initial_lab_test_data = {}
+    medical_record_queryset = MedicalRecord.objects.select_related('patient').order_by('-record_date', 'patient__full_name')
+
+    if patient_id_from_url:
+        try:
+            selected_patient = Patient.objects.get(pk=patient_id_from_url)
+            medical_record_queryset = MedicalRecord.objects.filter(patient=selected_patient).select_related('patient').order_by('-record_date')
+            latest_medical_record = medical_record_queryset.first()
+            if latest_medical_record:
+                initial_lab_test_data['medical_record'] = latest_medical_record.pk
+        except Patient.DoesNotExist:
+            messages.error(request, "Không tìm thấy bệnh nhân được chọn.")
+            # return redirect('patients:patient_list') # Hoặc một trang lỗi khác
+
     if request.method == 'POST':
         lab_test_form = LabTestForm(request.POST, prefix='labtest')
-        result_formset = LabTestResultValueFormSet(request.POST, prefix='results')
+        if selected_patient: # Lọc lại queryset nếu có patient_id từ URL, cho cả POST
+             lab_test_form.fields['medical_record'].queryset = medical_record_queryset
+
+        result_formset = LabTestResultValueFormSet(request.POST, prefix='results') 
 
         if lab_test_form.is_valid():
             lab_test = lab_test_form.save(commit=False)
             if request.user.is_authenticated:
                 lab_test.requested_by = request.user
+            selected_template = lab_test_form.cleaned_data.get('template')
+            if not selected_template:
+                messages.error(request, "Vui lòng chọn một mẫu xét nghiệm.")
+                context = {'lab_test_form': lab_test_form, 'result_formset': result_formset, 'page_title': 'Nhập Kết quả Xét nghiệm Mới', 'form_title': 'Thông tin Phiếu Xét nghiệm và Kết quả', 'submit_button_text': 'Lưu Kết quả', 'selected_patient': selected_patient}
+                return render(request, 'labtests/lab_test_form_and_results.html', context)
             lab_test.save() 
 
             result_formset.instance = lab_test 
             if result_formset.is_valid():
                 try:
                     with transaction.atomic():
-                        # Xóa các result_value cũ của lab_test này trước khi lưu mới (nếu cần)
-                        # Điều này hữu ích nếu JS luôn gửi lại toàn bộ formset
-                        # lab_test.result_values.all().delete() 
+                        instances = result_formset.save(commit=False)
+                        saved_count = 0
+                        for instance in instances:
+                            if instance.template_field_id: 
+                                if request.user.is_authenticated:
+                                    instance.entered_by = request.user
+                                if instance.value or instance.comment or instance.pk:
+                                    instance.save()
+                                    saved_count += 1
+                        result_formset.save_m2m()
                         
-                        result_formset.save() # Django formset sẽ tự động xử lý việc tạo/cập nhật
-                                            # các LabTestResultValue liên quan đến lab_test.instance
-                                            # và gán lab_test, template_field (nếu template_field là ModelChoiceField trong form)
-
-                        # Gán entered_by cho các instance vừa được formset lưu
-                        for form_in_formset in result_formset:
-                            if form_in_formset.instance and form_in_formset.instance.pk: # Chỉ gán cho instance đã được lưu
-                                if form_in_formset.has_changed() or not form_in_formset.instance.entered_by:
-                                    form_in_formset.instance.entered_by = request.user
-                                    form_in_formset.instance.save(update_fields=['entered_by'])
-                        
-                        lab_test.results_updated_at = timezone.now()
-                        snapshot_details = "; ".join([f"{rv.template_field.field_name}: {rv.value or ''}" for rv in lab_test.result_values.all().order_by('template_field__field_order')])
-                        first_version = LabTestVersion.objects.create(
-                            lab_test=lab_test, version_number=1,
-                            result_snapshot=snapshot_details,
-                            changed_by=request.user,
-                            change_reason="Phiếu xét nghiệm được tạo và nhập kết quả."
-                        )
-                        lab_test.latest_version = first_version
-                        lab_test.save()
-                        messages.success(request, f"Đã lưu kết quả xét nghiệm cho HSBA ID {lab_test.medical_record.id} thành công!")
-                        return redirect('labtests:lab_test_list')
+                        if saved_count > 0 or not selected_template.fields.exists():
+                            lab_test.results_updated_at = timezone.now()
+                            snapshot_details = "; ".join([f"{rv.template_field.field_name}: {rv.value or ''}" for rv in lab_test.result_values.all().order_by('template_field__field_order')])
+                            first_version = LabTestVersion.objects.create(
+                                lab_test=lab_test, version_number=1,
+                                result_snapshot=snapshot_details,
+                                changed_by=request.user,
+                                change_reason="Phiếu xét nghiệm được tạo và nhập kết quả."
+                            )
+                            lab_test.latest_version = first_version
+                            lab_test.save()
+                            messages.success(request, f"Đã lưu {saved_count} kết quả xét nghiệm cho HSBA ID {lab_test.medical_record.id} thành công!")
+                            return redirect('labtests:lab_test_list')
+                        else:
+                             messages.warning(request, "Không có kết quả nào được nhập hoặc có lỗi khi xử lý các chỉ số.")
                 except Exception as e:
                     messages.error(request, f"Lỗi khi lưu kết quả chi tiết: {e}")
                     print(f"Lỗi Exception khi lưu LabTest/Results (CREATE): {e}")
             else: 
-                messages.error(request, "Vui lòng sửa các lỗi trong phần nhập kết quả chi tiết.")
+                messages.error(request, "Dữ liệu kết quả chi tiết không hợp lệ. Vui lòng kiểm tra lại.")
                 print("LabTest Form (valid):", lab_test_form.cleaned_data)
                 print("Result Formset errors (POST CREATE):", result_formset.errors)
                 for i, form_in_set in enumerate(result_formset.forms):
@@ -203,7 +233,10 @@ def lab_test_create_and_enter_results(request):
                  print("Result Formset (bound but lab_test_form invalid) errors:", result_formset.errors)
                  print("Result Formset (bound but lab_test_form invalid) non-form errors:", result_formset.non_form_errors())
     else: # GET request
-        lab_test_form = LabTestForm(prefix='labtest')
+        lab_test_form = LabTestForm(prefix='labtest', initial=initial_lab_test_data)
+        if selected_patient:
+            lab_test_form.fields['medical_record'].queryset = medical_record_queryset
+        
         result_formset = LabTestResultValueFormSet(queryset=LabTestResultValue.objects.none(), prefix='results')
     
     context = {
@@ -211,12 +244,13 @@ def lab_test_create_and_enter_results(request):
         'result_formset': result_formset,
         'page_title': 'Nhập Kết quả Xét nghiệm Mới',
         'form_title': 'Thông tin Phiếu Xét nghiệm và Kết quả',
-        'submit_button_text': 'Lưu Kết quả'
+        'submit_button_text': 'Lưu Kết quả',
+        'selected_patient': selected_patient
     }
     return render(request, 'labtests/lab_test_form_and_results.html', context)
 
 @login_required 
-def lab_test_list(request): # ... (giữ nguyên) ...
+def lab_test_list(request): # Đảm bảo hàm này được định nghĩa đúng
     query = request.GET.get('q', '')
     lab_tests_queryset = LabTest.objects.select_related(
         'medical_record__patient', 'template', 'requested_by', 'latest_version'
@@ -235,9 +269,9 @@ def lab_test_list(request): # ... (giữ nguyên) ...
     }
     return render(request, 'labtests/lab_test_list.html', context)
 
-
-@login_required # SỬA HÀM NÀY
+@login_required
 def lab_test_update_results(request, pk):
+    # ... (Nội dung hàm này giữ nguyên như phiên bản trước - ID: labtest_views_py_save_display_final_fix_v6) ...
     lab_test_instance = get_object_or_404(LabTest.objects.select_related('medical_record__patient', 'template'), pk=pk)
     
     if request.method == 'POST':
@@ -255,37 +289,19 @@ def lab_test_update_results(request, pk):
                     if result_formset.has_changed():
                         significant_change_in_results = True
                     
-                    # Xử lý các form được đánh dấu xóa trước
-                    for form_to_delete in result_formset.deleted_objects:
-                        form_to_delete.delete()
-
-                    # Lưu các form còn lại (cả cập nhật và tạo mới nếu có)
-                    # formset.save() sẽ tự động xử lý việc này khi có instance
-                    # Chúng ta cần đảm bảo template_field được gán đúng cho các form mới (nếu có)
-                    # và entered_by được gán.
+                    for form_to_delete in result_formset.deleted_forms:
+                        if form_to_delete.instance.pk:
+                            form_to_delete.instance.delete()
+                    
                     instances = result_formset.save(commit=False)
-                    for i, instance in enumerate(instances): # instances là các LabTestResultValue
-                        instance.lab_test = updated_lab_test # Đảm bảo liên kết đúng
-                        
-                        # Nếu là form mới (chưa có pk) và template_field chưa được gán (từ hidden input)
-                        # thì JS phải đảm bảo gửi template_field_id
-                        if not instance.template_field_id:
-                            template_field_id_str = request.POST.get(f'results-{i}-template_field')
-                            if template_field_id_str:
-                                try:
-                                    instance.template_field_id = int(template_field_id_str)
-                                except ValueError:
-                                    print(f"UPDATE: Invalid template_field_id '{template_field_id_str}' for new form {i}.")
-                                    continue # Bỏ qua form này nếu template_field không hợp lệ
-                            else:
-                                print(f"UPDATE: Missing template_field_id for new form {i}.")
-                                continue # Bỏ qua form mới không có template_field
-
-                        if request.user.is_authenticated:
-                            instance.entered_by = request.user
-                        
-                        if instance.template_field_id: # Chỉ lưu nếu có template_field
+                    for instance in instances:
+                        if instance.template_field_id: 
+                            if request.user.is_authenticated:
+                                instance.entered_by = request.user
                             instance.save()
+                        else:
+                            print(f"    UPDATE: Skipped saving an instance in formset due to missing template_field_id. Data: {instance.__dict__}")
+                    result_formset.save_m2m()
                     
                     if significant_change_in_results:
                         last_version_number = updated_lab_test.versions.aggregate(max_version=Max('version_number'))['max_version'] or 0
@@ -314,32 +330,22 @@ def lab_test_update_results(request, pk):
             print("Result Formset non-form errors (update):", result_formset.non_form_errors())
     else: # GET request
         lab_test_form = LabTestForm(instance=lab_test_instance, prefix='labtest')
-        # Khởi tạo formset với instance. Django sẽ tự động tìm LabTestResultValue liên quan.
         result_formset = LabTestResultValueFormSet(instance=lab_test_instance, prefix='results')
         
-        # DEBUG: In ra để xem formset có dữ liệu không khi GET
-        print(f"DEBUG GET - LabTest ID for update: {lab_test_instance.pk}")
-        if result_formset.forms:
-            for i, form_in_set in enumerate(result_formset.forms):
-                print(f"  Form {i} (GET update) initial value: {form_in_set.initial.get('value')}, instance value: {form_in_set.instance.value if form_in_set.instance and hasattr(form_in_set.instance, 'value') else 'No instance or value'}")
-                print(f"  Form {i} (GET update) instance template_field_id: {form_in_set.instance.template_field_id if form_in_set.instance and hasattr(form_in_set.instance, 'template_field_id') else 'No instance or template_field_id'}")
-        else: # Nếu không có form nào, nghĩa là không có result_value nào được tạo cho các template_field của LabTest này
-              # JavaScript sẽ cần tạo các dòng dựa trên template.
-            print("  DEBUG GET - No forms in result_formset on GET for update. JS will populate based on template.")
-
+        selected_patient_for_edit = lab_test_instance.medical_record.patient if lab_test_instance.medical_record else None
 
     context = {
         'lab_test_form': lab_test_form, 'result_formset': result_formset,
         'lab_test_instance': lab_test_instance, 
+        'selected_patient': selected_patient_for_edit,
         'page_title': f'Sửa/Xem Kết quả Xét nghiệm: {lab_test_instance.template.name}',
         'form_title': f'Kết quả cho {lab_test_instance.medical_record.patient.full_name} (HSBA: {lab_test_instance.medical_record.id})',
         'submit_button_text': 'Lưu Thay đổi Kết quả'
     }
     return render(request, 'labtests/lab_test_form_and_results.html', context)
 
-# ... (lab_test_delete và generate_lab_test_pdf giữ nguyên) ...
 @login_required
-def lab_test_delete(request, pk): # ... (giữ nguyên) ...
+def lab_test_delete(request, pk):
     lab_test_instance = get_object_or_404(LabTest, pk=pk)
     lab_test_display = f"phiếu xét nghiệm #{lab_test_instance.pk} ({lab_test_instance.template.name}) cho bệnh nhân {lab_test_instance.medical_record.patient.full_name}"
     if request.method == 'POST':
@@ -357,8 +363,10 @@ def lab_test_delete(request, pk): # ... (giữ nguyên) ...
     }
     return render(request, 'labtests/lab_test_confirm_delete.html', context)
 
+# ---- VIEW ĐỂ XUẤT PDF (Sửa layout và bảng kết quả) ----
 @login_required
-def generate_lab_test_pdf(request, lab_test_id): # ... (giữ nguyên như phiên bản trước - ID: labtest_views_py_pdf_font_logo_final_v2) ...
+def generate_lab_test_pdf(request, lab_test_id):
+    # ... (Nội dung hàm này giữ nguyên như phiên bản trước - ID: labtest_views_py_pdf_font_logo_final_v3) ...
     lab_test = get_object_or_404(LabTest.objects.select_related(
         'medical_record__patient', 
         'template', 
@@ -520,26 +528,31 @@ def generate_lab_test_pdf(request, lab_test_id): # ... (giữ nguyên như phiê
 
     
     # --- Footer (Sửa khoảng cách ký tên) ---
-    footer_y_start = 45*mm 
+    footer_y_start_text = 45*mm 
+
     p_kiem_duyet = Paragraph("Kết quả đã được kiểm duyệt /QA", style_normal)
-    p_kiem_duyet.wrapOn(p_canvas, 80*mm, 10*mm); p_kiem_duyet.drawOn(p_canvas, 20*mm, footer_y_start)
+    p_kiem_duyet.wrapOn(p_canvas, 80*mm, 10*mm); p_kiem_duyet.drawOn(p_canvas, 20*mm, footer_y_start_text)
     
     ngay_thang_nam_tp = f"TP. Cần Thơ, ngày {timezone.localtime(timezone.now()).day} tháng {timezone.localtime(timezone.now()).month} năm {timezone.localtime(timezone.now()).year}"
     p_ngay_tp = Paragraph(ngay_thang_nam_tp, style_normal)
     text_width_ngaytp = p_canvas.stringWidth(ngay_thang_nam_tp, font_name, 9)
-    p_ngay_tp.wrapOn(p_canvas, text_width_ngaytp + 5*mm, 10*mm); p_ngay_tp.drawOn(p_canvas, page_width - 20*mm - text_width_ngaytp, footer_y_start)
+    p_ngay_tp.wrapOn(p_canvas, text_width_ngaytp + 5*mm, 10*mm); p_ngay_tp.drawOn(p_canvas, page_width - 20*mm - text_width_ngaytp, footer_y_start_text)
     
-    # Khoảng trống cho chữ ký (ĐÃ SỬA)
-    signature_block_y_start = footer_y_start - 10*mm # Y bắt đầu cho khối "PHÒNG XÉT NGHIỆM"
-    signature_space_above_text = 18*mm # Khoảng trống phía trên chữ "PHÒNG XÉT NGHIỆM" để ký (tăng lên)
+    # Vị trí cho dòng "(Ký, đóng dấu và ghi rõ họ tên)" - Đẩy xuống thấp hơn
+    y_ky_ten_text = footer_y_start_text - 23*mm 
+    
+    p_ky_ten = Paragraph("(Ký, đóng dấu và ghi rõ họ tên)", style_header_info)
+    ky_ten_width = p_canvas.stringWidth("(Ký, đóng dấu và ghi rõ họ tên)", font_name, 8)
+    p_ky_ten.wrapOn(p_canvas, ky_ten_width + 5*mm, 10*mm)
+    p_ky_ten.drawOn(p_canvas, page_width - 20*mm - ky_ten_width - (70*mm - ky_ten_width)/2, y_ky_ten_text)
+
+    # Vị trí cho "PHÒNG XÉT NGHIỆM" (PHÍA TRÊN dòng ký tên)
+    y_phong_xet_nghiem_title = y_ky_ten_text + 5*mm # Đặt ngay phía trên dòng (Ký,...)
     
     p_pxn_title = Paragraph("PHÒNG XÉT NGHIỆM", style_bold_small)
     pxn_title_width = p_canvas.stringWidth("PHÒNG XÉT NGHIỆM", font_name_bold, 9)
-    p_pxn_title.wrapOn(p_canvas, pxn_title_width + 5*mm, 10*mm); p_pxn_title.drawOn(p_canvas, page_width - 20*mm - pxn_title_width - (70*mm - pxn_title_width)/2 , signature_block_y_start - signature_space_above_text)
-
-    p_ky_ten = Paragraph("(Ký, đóng dấu và ghi rõ họ tên)", style_header_info)
-    ky_ten_width = p_canvas.stringWidth("(Ký, đóng dấu và ghi rõ họ tên)", font_name, 8)
-    p_ky_ten.wrapOn(p_canvas, ky_ten_width + 5*mm, 10*mm); p_ky_ten.drawOn(p_canvas, page_width - 20*mm - ky_ten_width - (70*mm - ky_ten_width)/2, signature_block_y_start - signature_space_above_text - 5*mm)
+    p_pxn_title.wrapOn(p_canvas, pxn_title_width + 5*mm, 10*mm)
+    p_pxn_title.drawOn(p_canvas, page_width - 20*mm - pxn_title_width - (70*mm - pxn_title_width)/2 , y_phong_xet_nghiem_title)
 
 
     p_ghichu_cuoi = Paragraph("*Ghi chú: Kết quả in đậm là ngoài khoảng tham chiếu, kết quả chỉ có giá trị trên mẫu thử. Tô đậm bên trái -Thấp. Tô đậm bên phải-Cao.", style_footer_note)

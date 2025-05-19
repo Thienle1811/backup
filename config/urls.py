@@ -38,6 +38,7 @@ urlpatterns = [
     path('appointments/', include('apps.appointments.urls', namespace='appointments')),
     path('lab-tests/', include('apps.labtests.urls', namespace='labtests')),
     path('management/accounts/', include('apps.accounts.urls', namespace='accounts_admin')), 
+     path('accounts/', include('django.contrib.auth.urls')),
 
     # Bạn có thể thêm các include cho các app khác ở đây sau này, ví dụ:
     # path('lab-tests/', include('apps.labtests.urls', namespace='labtests')),

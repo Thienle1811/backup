@@ -1,100 +1,103 @@
-        {% extends 'base.html' %}
-        {% load i18n %} {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+    {% extends 'base.html' %}
+    {% load i18n %}
 
-        {% block page_header %}
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-900">
-                    {{ page_title }}
-                </h1>
-                <a href="{% url 'patients:patient_create' %}" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <i class="fas fa-plus mr-2"></i> {% translate "Thêm bệnh nhân mới" %}
-                </a>
-            </div>
-        </header>
-        {% endblock page_header %}
+    {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
 
-        {% block content %}
-        <main>
-            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div class="px-4 py-6 sm:px-0">
-                    {% if messages %}
-                        <div class="mb-4">
-                            {% for message in messages %}
-                                <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}" role="alert">
-                                    {{ message }}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+    {% block page_header %}
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-900">
+                {{ page_title }}
+            </h1>
+            <a href="{% url 'patients:patient_create' %}" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i> {% translate "Thêm bệnh nhân mới" %}
+            </a>
+        </div>
+    </header>
+    {% endblock page_header %}
 
-                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                        <div class="px-4 py-5 sm:px-6">
-                            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                    {% if search_query %}
-                                        {% blocktranslate with query=search_query count=patient_count %}Kết quả tìm kiếm cho: "{{ query }}" ({{ count }} bệnh nhân){% endblocktranslate %}
-                                    {% else %}
-                                        {% blocktranslate count patient_count=patient_count %}Tổng số: {{ patient_count }} bệnh nhân{% plural %}Tổng số: {{ patient_count }} bệnh nhân{% endblocktranslate %}
-                                    {% endif %}
-                                </h3>
-                                <form method="GET" action="{% url 'patients:patient_list' %}" class="w-full sm:w-auto sm:max-w-md">
-                                    <div class="flex rounded-md shadow-sm">
-                                        <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="{% translate 'Tìm theo tên, email, SĐT...' %}" class="focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-l-md px-3 py-2">
-                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                </form>
+    {% block content %}
+    <main>
+        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="px-4 py-6 sm:px-0">
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}" role="alert">
+                                {{ message }}
                             </div>
-                        </div>
-                        <div class="border-t border-gray-200">
-                            {% if patients %}
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Họ và tên" %}</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Ngày sinh" %}</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Giới tính" %}</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Số điện thoại" %}</th>
-                                                <th scope="col" class="relative px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Hành động" %}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            {% for patient in patients %}
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ patient.full_name }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ patient.date_of_birth|date:"d/m/Y"|default:_("Chưa có") }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                     <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if patient.gender == 'MALE' %}bg-blue-100 text-blue-800{% elif patient.gender == 'FEMALE' %}bg-pink-100 text-pink-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                                        {{ patient.get_gender_display }}
-                                                    </p>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ patient.phone|default:_("Chưa có") }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <a href="{% url 'patients:patient_update' patient.pk %}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1">{% translate "Sửa" %}</a>
-                                                    <a href="{% url 'patients:patient_delete' patient.pk %}" class="text-red-600 hover:text-red-900 px-2 py-1 ml-2">{% translate "Xóa" %}</a>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                {% if search_query %}
+                                    {% blocktranslate with query=search_query count=patient_count %}Kết quả tìm kiếm cho: "{{ query }}" ({{ count }} bệnh nhân){% endblocktranslate %}
+                                {% else %}
+                                    {% blocktranslate count patient_count=patient_count %}Tổng số: {{ patient_count }} bệnh nhân{% plural %}Tổng số: {{ patient_count }} bệnh nhân{% endblocktranslate %}
+                                {% endif %}
+                            </h3>
+                            <form method="GET" action="{% url 'patients:patient_list' %}" class="w-full sm:w-auto sm:max-w-md">
+                                <div class="flex rounded-md shadow-sm">
+                                    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="{% translate 'Tìm theo tên, email, SĐT...' %}" class="focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-l-md px-3 py-2">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <i class="fas fa-search"></i>
+                                    </button>
                                 </div>
-                            {% else %}
-                                <p class="px-4 py-5 sm:p-6 text-center text-gray-500">
-                                    {% if search_query %}
-                                        {% translate "Không tìm thấy bệnh nhân nào khớp với từ khóa" %} "{{ search_query }}".
-                                    {% else %}
-                                        {% translate "Chưa có bệnh nhân nào trong hệ thống." %}
-                                        <a href="{% url 'patients:patient_create' %}" class="text-blue-600 hover:text-blue-800 font-medium">{% translate "Thêm bệnh nhân mới?" %}</a>
-                                    {% endif %}
-                                </p>
-                            {% endif %}
+                            </form>
                         </div>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        {% if patients %}
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Họ và tên" %}</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Ngày sinh" %}</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Giới tính" %}</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Số điện thoại" %}</th>
+                                            <th scope="col" class="relative px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Hành động" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% for patient_obj in patients %} {# Đổi tên biến lặp để không trùng #}
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ patient_obj.full_name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ patient_obj.date_of_birth|date:"d/m/Y"|default:_("Chưa có") }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                 <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if patient_obj.gender == 'MALE' %}bg-blue-100 text-blue-800{% elif patient_obj.gender == 'FEMALE' %}bg-pink-100 text-pink-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                    {{ patient_obj.get_gender_display }}
+                                                </p>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ patient_obj.phone|default:_("Chưa có") }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="{% url 'labtests:lab_test_create_and_enter_results' %}?patient_id={{ patient_obj.pk }}" class="text-green-600 hover:text-green-800 px-2 py-1">Tạo phiếu XN</a>
+                                                <a href="{% url 'patients:patient_update' patient_obj.pk %}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 ml-2">{% translate "Sửa" %}</a>
+                                                <a href="{% url 'patients:patient_delete' patient_obj.pk %}" class="text-red-600 hover:text-red-900 px-2 py-1 ml-2">{% translate "Xóa" %}</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="px-4 py-5 sm:p-6 text-center text-gray-500">
+                                {% if search_query %}
+                                    {% translate "Không tìm thấy bệnh nhân nào khớp." %}
+                                {% else %}
+                                    {% translate "Chưa có bệnh nhân nào trong hệ thống." %}
+                                    <a href="{% url 'patients:patient_create' %}" class="text-blue-600 hover:text-blue-800 font-medium">{% translate "Thêm bệnh nhân mới?" %}</a>
+                                {% endif %}
+                            </p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-        </main>
-        {% endblock content %}
-        
+        </div>
+    </main>
+    {% endblock content %}
+    
