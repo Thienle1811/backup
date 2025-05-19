@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{# {% load crispy_forms_tags %} #} {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+
+{% block page_header %}
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            {{ page_title }}
+        </h1>
+    </div>
+</header>
+{% endblock page_header %}
+
+{% block content %}
+<main>
+    <div class="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8"> 
+        <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors or formset.non_form_errors %}
+                    <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                        <h4 class="font-bold">Vui lòng sửa các lỗi sau:</h4>
+                        <ul class="list-disc list-inside mt-2">
+                            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                            {% for error in formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="md:grid md:grid-cols-3 md:gap-6">
+                    <div class="md:col-span-1">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">{{ form_title|default:"Thông tin Mẫu Xét nghiệm" }}</h3>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Chọn một mẫu cơ sở (tùy chọn) để điền nhanh các chỉ số, sau đó đặt tên cụ thể cho mẫu của bạn.
+                        </p>
+                    </div>
+                    <div class="mt-5 md:mt-0 md:col-span-2 space-y-4">
+                        {% for field in form %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                        <span class="text-red-500">*</span>
+                                    {% endif %}
+                                </label>
+                                <div class="mt-1">
+                                    {{ field }}
+                                </div>
+                                {% if field.help_text %}
+                                    <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-8 border-t border-gray-200 pt-8">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-1">Các Chỉ số của Mẫu Xét nghiệm</h3>
+                    <p class="text-sm text-gray-500 mb-4">Cột "Kết quả" dùng để nhập hướng dẫn hoặc giá trị mẫu cho chỉ số này khi định nghĩa mẫu.</p>
+                    
+                    {{ formset.management_form }}
+                    
+                    <div class="hidden sm:grid grid-cols-12 gap-x-2 gap-y-2 mb-2 text-xs font-medium text-gray-500 uppercase items-center">
+                        <div class="col-span-4 pl-1">Tên xét nghiệm</div>
+                        <div class="col-span-3 pl-1">Kết quả (Hướng dẫn/Mẫu)</div>
+                        <div class="col-span-3 pl-1">Chỉ số bình thường</div>
+                        <div class="col-span-1 pl-1">Đơn vị</div>
+                        <div class="col-span-1 text-center">TT</div>
+                    </div>
+
+                    <div id="lab-test-fields-container" class="space-y-2">
+                        {% for field_form in formset %}
+                            <div class="p-2 border border-gray-200 rounded-md bg-gray-50 field-formset-row">
+                                {% for hidden_field in field_form.hidden_fields %}{{ hidden_field }}{% endfor %}
+                                <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-2 gap-y-2 items-start">
+                                    <div class="sm:col-span-4">
+                                        <label for="{{ field_form.field_name.id_for_label }}" class="block text-xs font-medium text-gray-700 sm:hidden">{{ field_form.field_name.label }} {% if field_form.field_name.field.required %}<span class="text-red-500">*</span>{% endif %}</label>
+                                        {{ field_form.field_name }}
+                                        {% for error in field_form.field_name.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
+                                    </div>
+                                    <div class="sm:col-span-3">
+                                        <label for="{{ field_form.result_guidance.id_for_label }}" class="block text-xs font-medium text-gray-700 sm:hidden">{{ field_form.result_guidance.label }} {% if field_form.result_guidance.field.required %}<span class="text-red-500">*</span>{% endif %}</label>
+                                        {{ field_form.result_guidance }}
+                                        {% for error in field_form.result_guidance.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
+                                    </div>
+                                    <div class="sm:col-span-3">
+                                        <label for="{{ field_form.reference_range_text.id_for_label }}" class="block text-xs font-medium text-gray-700 sm:hidden">{{ field_form.reference_range_text.label }} {% if field_form.reference_range_text.field.required %}<span class="text-red-500">*</span>{% endif %}</label>
+                                        {{ field_form.reference_range_text }}
+                                        {% for error in field_form.reference_range_text.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <label for="{{ field_form.unit.id_for_label }}" class="block text-xs font-medium text-gray-700 sm:hidden">{{ field_form.unit.label }} {% if field_form.unit.field.required %}<span class="text-red-500">*</span>{% endif %}</label>
+                                        {{ field_form.unit }}
+                                        {% for error in field_form.unit.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <label for="{{ field_form.field_order.id_for_label }}" class="block text-xs font-medium text-gray-700 sm:hidden">{{ field_form.field_order.label }} {% if field_form.field_order.field.required %}<span class="text-red-500">*</span>{% endif %}</label>
+                                        {{ field_form.field_order }}
+                                        {% for error in field_form.field_order.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
+                                    </div>
+                                </div>
+                                 {% if formset.can_delete and field_form.instance.pk %}
+                                    <div class="text-right mt-1">
+                                        {{ field_form.DELETE }} <label for="{{ field_form.DELETE.id_for_label }}" class="text-xs text-red-600 hover:text-red-800 cursor-pointer">Xóa chỉ số này</label>
+                                    </div>
+                                {% elif formset.can_delete %}
+                                     <div class="text-right mt-1">
+                                        {{ field_form.DELETE }} <label for="{{ field_form.DELETE.id_for_label }}" class="text-xs text-gray-500 hover:text-gray-700 cursor-pointer">Xóa dòng mới</label>
+                                    </div>
+                                {% endif %}
+                                <div style="display:none;">
+                                    {{ field_form.normal_min.label_tag }} {{ field_form.normal_min }}
+                                    {{ field_form.normal_max.label_tag }} {{ field_form.normal_max }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div id="empty-field-form-template" style="display:none;">
+                        <div class="p-2 border border-gray-200 rounded-md bg-gray-50 field-formset-row">
+                            {% for hidden_field in formset.empty_form.hidden_fields %}{{ hidden_field }}{% endfor %}
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-2 gap-y-2 items-start">
+                                <div class="sm:col-span-4">{{ formset.empty_form.field_name }}</div>
+                                <div class="sm:col-span-3">{{ formset.empty_form.result_guidance }}</div>
+                                <div class="sm:col-span-3">{{ formset.empty_form.reference_range_text }}</div>
+                                <div class="sm:col-span-1">{{ formset.empty_form.unit }}</div>
+                                <div class="sm:col-span-1">{{ formset.empty_form.field_order }}</div>
+                            </div>
+                             {% if formset.can_delete %}
+                                <div class="text-right mt-1">
+                                    {{ formset.empty_form.DELETE }} <label for="{{ formset.empty_form.DELETE.id_for_label|default_if_none:'' }}" class="text-xs text-gray-500 hover:text-gray-700 cursor-pointer">Xóa dòng mới</label>
+                                </div>
+                            {% endif %}
+                            <div style="display:none;">
+                                {{ formset.empty_form.normal_min.label_tag }} {{ formset.empty_form.normal_min }}
+                                {{ formset.empty_form.normal_max.label_tag }} {{ formset.empty_form.normal_max }}
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Bạn có thể thêm các chỉ số mới. Để trống "Tên xét nghiệm" của các dòng không sử dụng để loại bỏ khi lưu.</p>
+                </div>
+
+                <div class="pt-8">
+                    <div class="flex justify-end">
+                        <a href="{% url 'labtests:lab_test_template_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Hủy
+                        </a>
+                        <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            {{ submit_button_text|default:"Lưu" }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Mã JavaScript giữ nguyên như phiên bản trước (ID: labtest_template_form_html_fully_populated)
+// Đảm bảo bạn đã điền đầy đủ dữ liệu cho predefinedFieldsData
+document.addEventListener('DOMContentLoaded', function() {
+    const baseTemplateSelector = document.getElementById('id_base_template_selector');
+    const fieldsContainer = document.getElementById('lab-test-fields-container');
+    const emptyFormTemplateHTML = document.getElementById('empty-field-form-template').innerHTML;
+    const totalFormsInput = document.querySelector('input[name="fields-TOTAL_FORMS"]');
+
+    const predefinedFieldsData = { /* DỮ LIỆU CỦA BẠN Ở ĐÂY */
+        'HUYET_HOC_TONG_QUAT': [
+            { name: '+ Số lượng bạch cầu (WBC)', unit: 'K/µL', ref_range: '4.8-10.0' },
+            { name: 'NEU#', unit: 'K/µL', ref_range: '1.8-6.4' },
+            { name: 'LYM#', unit: 'K/µL', ref_range: '1.0-3.3' },
+            { name: 'MONO#', unit: 'K/µL', ref_range: '0.1-0.6' },
+            { name: 'EOS#', unit: 'K/µL', ref_range: '0.0-0.7' },
+            { name: 'BASO#', unit: 'K/µL', ref_range: '0.0-0.1' },
+            { name: 'NEU%', unit: '%', ref_range: '45.0-75.0' },
+            { name: 'LYM%', unit: '%', ref_range: '20.0-45.0' },
+            { name: 'MONO%', unit: '%', ref_range: '1.7-9.3' },
+            { name: 'EOS%', unit: '%', ref_range: '0.0-6.0' },
+            { name: 'BASO%', unit: '%', ref_range: '0.0-2.0' },
+            { name: '+ Số lượng hồng cầu (RBC)', unit: 'M/µL', ref_range: '3.8-5.8' },
+            { name: 'HGB', unit: 'g/dL', ref_range: '11.0-16.0' },
+            { name: 'HCT', unit: '%', ref_range: '35.0-52.0' },
+            { name: 'MCV', unit: 'fL', ref_range: '80.0-100.0' },
+            { name: 'MCH', unit: 'pg', ref_range: '27.0-32.0' },
+            { name: 'MCHC', unit: 'g/dL', ref_range: '32.0-36.0' },
+            { name: 'RDW', unit: '%', ref_range: '11.5-14.5' },
+            { name: '+ Số lượng tiểu cầu (PLT)', unit: 'K/µL', ref_range: '150-400' },
+            { name: 'MPV', unit: 'fL', ref_range: '7.0-12.0' },
+            { name: 'PCT', unit: '%', ref_range: '0.1-0.35' },
+            { name: 'PDW', unit: '%', ref_range: '9-25' }
+        ],
+        'HUYET_HOC_DONG_MAU': [
+            { name: 'Thời gian Prothrombin (PT) bằng phương pháp tự động', unit: 'Giây', ref_range: '10-15' },
+            { name: 'Định lượng Fibrinogen', unit: 'mg/dl', ref_range: '200-400' },
+            { name: 'Thời gian thromboplastin hoạt hoá từng phần (APTT)', unit: 'Giây', ref_range: '<40' }
+        ],
+        'SINH_HOA': [
+            { name: 'Creatinin', unit: 'µmol/L', ref_range: '(Nam: 62-120, Nữ: 44-100)' },
+            { name: 'eGFR (MDRD)', unit: 'mL/phut/1.73m2', ref_range: '' },
+            { name: 'Urea', unit: 'mmol/L', ref_range: '2.5-7.5' },
+            { name: 'SGOT (AST)', unit: 'U/L', ref_range: '<37' },
+            { name: 'SGPT (ALT)', unit: 'U/L', ref_range: '<40' },
+            { name: 'Uric Acid', unit: 'µmol/L', ref_range: '(Nam: 180-420, Nữ: 150-360)' },
+            { name: 'Cholesterol Total', unit: 'mmol/L', ref_range: '(3.9-5.2)' },
+            { name: 'Triglycerides', unit: 'mmol/L', ref_range: '0.46-1.88' },
+            { name: 'LDL Cholesterol', unit: 'mmol/L', ref_range: '<3.4' },
+            { name: 'HDL Cholesterol', unit: 'mmol/L', ref_range: '>0.9' },
+            { name: 'GGT', unit: 'UI/L', ref_range: 'Nam: 11-50, Nữ: 7-32' },
+            { name: 'Bilirubin T', unit: 'µmol/L', ref_range: '0-17' },
+            { name: 'Bilirubin I', unit: 'µmol/L', ref_range: '0.0-12.62' },
+            { name: 'Albumin', unit: 'g/L', ref_range: '35-50' },
+            { name: 'Protein TP', unit: 'g/L', ref_range: '60-80' },
+            { name: 'Amylase', unit: 'UI/L', ref_range: '22-100' },
+            { name: 'Glucose', unit: 'mmol/L', ref_range: '3.9-6.4' },
+            { name: 'Na+', unit: 'mmol/L', ref_range: '135-145' },
+            { name: 'K+', unit: 'mmol/L', ref_range: '3.5-5.0' },
+            { name: 'Cl-', unit: 'mmol/L', ref_range: '98-108' },
+            { name: 'Calci ion hóa', unit: 'mmol/L', ref_range: '1.15-1.35' }
+        ],
+        'MIEN_DICH': [
+            { name: 'AFP(Định lượng)', unit: 'ng/ml', ref_range: '<10.0' },
+            { name: 'CA 125', unit: 'U/mL', ref_range: '<35' },
+            { name: 'CA153', unit: 'U/mL', ref_range: '<28' },
+            { name: 'CA 19.9', unit: 'UI/mL', ref_range: '<37' },
+            { name: 'TSH', unit: 'µUI/mL', ref_range: '0.38-4.31' },
+            { name: 'Free T3', unit: 'pg/mL', ref_range: '2.0-4.4' },
+            { name: 'Free T4', unit: 'ng/dL', ref_range: '0.82-1.63' },
+            { name: 'Ferritin', unit: 'ng/ml', ref_range: '11-300' },
+            { name: 'CEA', unit: 'ng/ml', ref_range: '<5.0' },
+            { name: 'PSA Total', unit: 'ng/ml', ref_range: '0.0-4.0' },
+            { name: 'Định lượng BNP (B-Type Natriuretic Peptide) [Máu]', unit: 'pg/mL', ref_range: '<100 pg/mL' }
+        ],
+        'NUOC_TIEU': [
+            { name: 'pH', unit: '', ref_range: '5.0-7.5' },
+            { name: 'Nitrite', unit: '', ref_range: 'Âm tính' },
+            { name: 'Glucose NT', unit: 'mg/dL', ref_range: 'Âm tính' },
+            { name: 'SG', unit: '', ref_range: '1.005-1.030' },
+            { name: 'Blood', unit: 'Ery/µL', ref_range: 'Âm tính' },
+            { name: 'Protein', unit: 'mg/dL', ref_range: 'Âm tính' },
+            { name: 'Bilirubin', unit: 'mg/dL', ref_range: 'Âm tính' },
+            { name: 'Urobilinogen', unit: 'mg/dL', ref_range: '0.2-1.0' },
+            { name: 'Ketone', unit: 'mg/dL', ref_range: 'Âm tính' },
+            { name: 'Leukocytes', unit: 'Leu/µL', ref_range: 'Âm tính' },
+            { name: 'Định lượng Micro Albumin niệu', unit: 'mg/L', ref_range: '(≤20 mg/L )' },
+            { name: 'Định lượng Microalbumin niệu (MAU)', unit: 'mg/L', ref_range: '<20mg/L' }
+        ]
+    };
+
+    function addNewFieldForm(data = {}, index) {
+        let formIdx = index;
+        let newFormHtml = emptyFormTemplateHTML.replace(/__prefix__/g, formIdx);
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newFormHtml;
+        const newFormRow = tempDiv.firstElementChild; 
+        
+        if (!newFormRow) { console.error("Could not create new form row from template content:", newFormHtml); return; }
+
+        const nameInput = newFormRow.querySelector(`input[name="fields-${formIdx}-field_name"], textarea[name="fields-${formIdx}-field_name"]`);
+        const resultGuidanceInput = newFormRow.querySelector(`input[name="fields-${formIdx}-result_guidance"], textarea[name="fields-${formIdx}-result_guidance"]`);
+        const refRangeInput = newFormRow.querySelector(`input[name="fields-${formIdx}-reference_range_text"], textarea[name="fields-${formIdx}-reference_range_text"]`);
+        const unitInput = newFormRow.querySelector(`input[name="fields-${formIdx}-unit"], textarea[name="fields-${formIdx}-unit"]`);
+        const orderInput = newFormRow.querySelector(`input[name="fields-${formIdx}-field_order"], select[name="fields-${formIdx}-field_order"]`);
+
+        if (nameInput) nameInput.value = data.name || '';
+        if (resultGuidanceInput) resultGuidanceInput.value = ''; 
+        if (refRangeInput) refRangeInput.value = data.ref_range || '';
+        if (unitInput) unitInput.value = data.unit || '';
+        if (orderInput) orderInput.value = data.order || (formIdx + 1);
+        
+        fieldsContainer.appendChild(newFormRow);
+    }
+
+    if (baseTemplateSelector && totalFormsInput) {
+        baseTemplateSelector.addEventListener('change', function() {
+            const selectedType = this.value;
+            const fieldsData = predefinedFieldsData[selectedType] || [];
+
+            const existingRows = fieldsContainer.querySelectorAll('.field-formset-row');
+            existingRows.forEach(row => row.remove());
+            
+            let currentTotalForms = 0;
+
+            fieldsData.forEach((field, index) => {
+                addNewFieldForm({ ...field, order: index + 1 }, currentTotalForms);
+                currentTotalForms++;
+            });
+            
+            totalFormsInput.value = currentTotalForms; 
+
+            const extraFormsCount = parseInt("{{ formset.extra|default:1 }}");
+            if (currentTotalForms === 0 && selectedType !== '') { 
+                for(let i = 0; i < extraFormsCount; i++){
+                    addNewFieldForm({ order: currentTotalForms + 1 + i }, currentTotalForms + i);
+                }
+                totalFormsInput.value = currentTotalForms + extraFormsCount;
+            } else if (selectedType === '') { 
+                 for(let i = 0; i < extraFormsCount; i++){
+                    addNewFieldForm({ order: currentTotalForms + 1 + i }, currentTotalForms + i);
+                }
+                totalFormsInput.value = currentTotalForms + extraFormsCount;
+            }
+        });
+    }
+});
+</script>
+{% endblock extra_js %}

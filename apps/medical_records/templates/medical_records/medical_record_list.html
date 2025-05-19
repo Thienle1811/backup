@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+
+{% block page_header %}
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">
+            {{ page_title }}
+        </h1>
+        <a href="{% url 'medical_records:medical_record_create' %}" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <i class="fas fa-plus mr-2"></i> Thêm hồ sơ mới
+        </a>
+    </div>
+</header>
+{% endblock page_header %}
+
+{% block content %}
+<main>
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            {% if search_query %}
+                                Kết quả tìm kiếm cho: "{{ search_query }}" ({{ record_count }} hồ sơ)
+                            {% else %}
+                                Tổng số: {{ record_count }} hồ sơ
+                            {% endif %}
+                        </h3>
+                        <form method="GET" action="{% url 'medical_records:medical_record_list' %}" class="w-full sm:w-auto sm:max-w-xs">
+                            <div class="flex rounded-md shadow-sm">
+                                <input type="text" name="q" id="search_record" value="{{ search_query|default:'' }}" placeholder="Tìm theo tên BN, chẩn đoán..." class="focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-l-md px-3 py-2">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200">
+                    {% if medical_records %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bệnh nhân</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày khám</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chẩn đoán (tóm tắt)</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người tạo</th>
+                                        <th scope="col" class="relative px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for record in medical_records %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {{ record.patient.full_name|default:"N/A" }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ record.record_date|date:"d/m/Y" }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate max-w-xs">
+                                            {{ record.diagnosis|truncatewords:15|default:"Chưa có" }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ record.created_by.get_full_name|default:record.created_by.email|default:"N/A" }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="#" class="text-blue-600 hover:text-blue-800 px-2 py-1">Chi tiết</a>
+                                            <a href="{% url 'medical_records:medical_record_update' record.pk %}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1">Sửa</a>
+                                            <a href="{% url 'medical_records:medical_record_delete' record.pk %}" class="text-red-600 hover:text-red-900 px-2 py-1">Xóa</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="px-4 py-5 sm:p-6 text-center text-gray-500">
+                            {% if search_query %}
+                                Không tìm thấy hồ sơ bệnh án nào khớp với từ khóa "{{ search_query }}".
+                            {% else %}
+                                Chưa có hồ sơ bệnh án nào trong hệ thống.
+                                <a href="{% url 'medical_records:medical_record_create' %}" class="text-blue-600 hover:text-blue-800 font-medium">Thêm hồ sơ mới?</a>
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock content %}

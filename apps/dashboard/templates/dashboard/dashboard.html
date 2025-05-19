@@ -1,0 +1,201 @@
+        {% extends 'base.html' %}
+
+        {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+
+        {% block page_header %}
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-lg leading-6 font-semibold text-gray-900">
+                    Xin chào, {{ request.user.get_full_name|default:request.user.email }}!
+                </h1>
+                <p class="mt-1 text-sm text-gray-500">Hôm nay là ngày {{ current_date|date:"d/m/Y" }}.</p>
+            </div>
+        </header>
+        {% endblock page_header %}
+
+        {% block content %}
+        <main class="mt-4">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="px-4 sm:px-0">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Tổng quan nhanh</h2>
+                    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-users fa-2x text-blue-500"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                                Tổng số Bệnh nhân
+                                            </dt>
+                                            <dd class="text-3xl font-semibold text-gray-900">
+                                                {{ total_patients }}
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 px-5 py-3">
+                                <div class="text-sm">
+                                    <a href="{% url 'patients:patient_list' %}" class="font-medium text-blue-700 hover:text-blue-900">
+                                        Xem danh sách
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-file-medical fa-2x text-green-500"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                                Hồ sơ mới hôm nay
+                                            </dt>
+                                            <dd class="text-3xl font-semibold text-gray-900">
+                                                {{ medical_records_today_count }}
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                             <div class="bg-gray-50 px-5 py-3">
+                                <div class="text-sm">
+                                    <a href="{% url 'medical_records:medical_record_list' %}" class="font-medium text-green-700 hover:text-green-900">
+                                        Xem danh sách
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-calendar-check fa-2x text-purple-500"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                                Lịch hẹn hôm nay
+                                            </dt>
+                                            <dd class="text-3xl font-semibold text-gray-900">
+                                                {{ appointments_today.count }}
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                             <div class="bg-gray-50 px-5 py-3">
+                                <div class="text-sm">
+                                    <a href="{% url 'appointments:appointment_list' %}" class="font-medium text-purple-700 hover:text-purple-900">
+                                        Xem chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 px-4 sm:px-0">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Lịch hẹn Hôm nay ({{ current_date|date:"d/m/Y" }})</h2>
+                    {% if appointments_today %}
+                        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                            <ul role="list" class="divide-y divide-gray-200">
+                                {% for appt in appointments_today %}
+                                <li class="hover:bg-gray-50">
+                                    <a href="{% url 'appointments:appointment_update' appt.pk %}" class="block px-4 py-4 sm:px-6">
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-md font-medium text-blue-600 truncate">
+                                                {{ appt.patient.full_name }}
+                                                {% if appt.appointment_time %}
+                                                    <span class="text-sm text-gray-500 font-normal">- {{ appt.appointment_time|time:"H:i" }}</span>
+                                                {% endif %}
+                                            </p>
+                                            <div class="ml-2 flex-shrink-0">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    {% if appt.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                                    {% elif appt.status == 'CONFIRMED' %}bg-blue-100 text-blue-800
+                                                    {% elif appt.status == 'COMPLETED' %}bg-green-100 text-green-800
+                                                    {% elif appt.status == 'CANCELLED' %}bg-red-100 text-red-800
+                                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                    {{ appt.get_status_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 sm:flex sm:justify-between">
+                                            <div class="sm:flex">
+                                                <p class="flex items-center text-sm text-gray-500">
+                                                    <i class="fas fa-user-md mr-1.5 h-5 w-5 text-gray-400"></i>
+                                                    {{ appt.staff.get_full_name|default:appt.staff.email|default:"Chưa gán" }}
+                                                </p>
+                                            </div>
+                                            <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                                Ghi chú: {{ appt.notes|truncatewords:10|default:"Không có" }}
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">Không có lịch hẹn nào cho hôm nay.</p>
+                    {% endif %}
+                </div>
+
+                <div class="mt-8 px-4 sm:px-0">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Lịch hẹn Sắp tới (5 lịch tiếp theo)</h2>
+                    {% if upcoming_appointments %}
+                        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                             <ul role="list" class="divide-y divide-gray-200">
+                                {% for appt in upcoming_appointments %}
+                                <li class="hover:bg-gray-50">
+                                    <a href="{% url 'appointments:appointment_update' appt.pk %}" class="block px-4 py-4 sm:px-6">
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-md font-medium text-blue-600 truncate">
+                                                {{ appt.patient.full_name }}
+                                                <span class="text-sm text-gray-500 font-normal">- {{ appt.appointment_date|date:"d/m" }}
+                                                {% if appt.appointment_time %}
+                                                    , {{ appt.appointment_time|time:"H:i" }}
+                                                {% endif %}
+                                                </span>
+                                            </p>
+                                            <div class="ml-2 flex-shrink-0">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    {% if appt.status == 'PENDING' %}bg-yellow-100 text-yellow-800
+                                                    {% elif appt.status == 'CONFIRMED' %}bg-blue-100 text-blue-800
+                                                    {% elif appt.status == 'COMPLETED' %}bg-green-100 text-green-800
+                                                    {% elif appt.status == 'CANCELLED' %}bg-red-100 text-red-800
+                                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                    {{ appt.get_status_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 sm:flex sm:justify-between">
+                                            <div class="sm:flex">
+                                                <p class="flex items-center text-sm text-gray-500">
+                                                    <i class="fas fa-user-md mr-1.5 h-5 w-5 text-gray-400"></i>
+                                                    {{ appt.staff.get_full_name|default:appt.staff.email|default:"Chưa gán" }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">Không có lịch hẹn nào sắp tới trong 7 ngày.</p>
+                    {% endif %}
+                </div>
+
+            </div>
+        </main>
+        {% endblock content %}
+        

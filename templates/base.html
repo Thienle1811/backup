@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trình Quản Lý Phòng Khám{% endblock title %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Áp dụng font Inter cho toàn bộ trang */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex; /* Cho phép footer dính xuống dưới */
+            flex-direction: column; /* Sắp xếp các thành phần con theo chiều dọc */
+            min-height: 100vh; /* Chiều cao tối thiểu bằng chiều cao viewport */
+            margin: 0; /* Loại bỏ margin mặc định của body */
+        }
+        /* Wrapper cho nội dung chính, đảm bảo nó chiếm không gian còn lại */
+        .content-wrapper {
+            flex-grow: 1; /* Cho phép div này mở rộng để chiếm không gian còn lại */
+            padding-bottom: 80px; /* Khoảng đệm dưới cùng, lớn hơn chiều cao của navbar */
+        }
+        /* Thanh điều hướng dưới cùng */
+        .bottom-nav {
+            position: fixed; /* Cố định ở cuối màn hình */
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white; /* Màu nền trắng */
+            border-top: 1px solid #e5e7eb; /* Đường viền trên (Tailwind gray-200) */
+            display: flex;
+            justify-content: space-around; /* Phân bố đều các mục */
+            align-items: center; /* Căn giữa các mục theo chiều dọc */
+            padding: 0.5rem 0; /* Padding trên dưới */
+            height: 60px; /* Chiều cao cố định cho navbar */
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* Đổ bóng nhẹ cho navbar */
+            z-index: 1000; /* Đảm bảo navbar luôn ở trên cùng */
+        }
+        /* Kiểu cho mỗi mục trong thanh điều hướng */
+        .nav-item {
+            display: flex;
+            flex-direction: column; /* Icon và chữ xếp chồng lên nhau */
+            align-items: center; /* Căn giữa theo chiều ngang */
+            text-decoration: none; /* Bỏ gạch chân link */
+            color: #6b7280; /* Màu chữ (Tailwind gray-500) */
+            font-size: 0.75rem; /* Cỡ chữ (12px) */
+            padding: 0.25rem 0.5rem; /* Padding cho mỗi mục */
+            border-radius: 0.375rem; /* Bo góc (rounded-md) */
+            transition: color 0.2s ease-in-out; /* Hiệu ứng chuyển màu chữ */
+        }
+        /* Kiểu cho mục đang được chọn (active) */
+        .nav-item.active {
+            color: #3b82f6; /* Màu chữ khi active (Tailwind blue-500) */
+        }
+        .nav-item:hover {
+            color: #2563eb; /* Màu chữ khi hover (Tailwind blue-600) */
+        }
+        /* Kiểu cho icon */
+        .nav-item i {
+            font-size: 1.25rem; /* Cỡ icon (20px) */
+            margin-bottom: 0.125rem; /* Khoảng cách giữa icon và chữ (2px) */
+        }
+    </style>
+    {% block extra_head %}{% endblock extra_head %}
+</head>
+<body class="bg-gray-50"> 
+    <div class="content-wrapper">
+        {% block page_header %}
+        {% endblock page_header %}
+
+        {% block content %}
+        {% endblock content %}
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="{% if user.is_authenticated %}{% url 'patients:patient_list' %}{% else %}#{% endif %}" 
+           class="nav-item {% if request.resolver_match.app_name == 'patients' %}active{% endif %}">
+            <i class="fas fa-users"></i>
+            <span>Bệnh nhân</span>
+        </a>
+        
+        <a href="{% if user.is_authenticated %}{% url 'labtests:lab_test_list' %}{% else %}#{% endif %}" 
+           class="nav-item {% if request.resolver_match.app_name == 'labtests' and request.resolver_match.url_name != 'lab_test_template_list' and request.resolver_match.url_name != 'lab_test_template_create' and request.resolver_match.url_name != 'lab_test_template_update' and request.resolver_match.url_name != 'lab_test_template_delete' %}active{% endif %}">
+            <i class="fas fa-vial"></i>
+            <span>Xét nghiệm</span>
+        </a>
+        
+        <a href="#" class="nav-item {% if request.resolver_match.app_name == 'search' %}active{% endif %}"> 
+            <i class="fas fa-search"></i>
+            <span>Tìm kiếm</span>
+        </a>
+        
+        <a href="{% if user.is_authenticated %}{% url 'home_dashboard' %}{% else %}#{% endif %}" 
+           class="nav-item {% if request.resolver_match.url_name == 'home_dashboard' or request.resolver_match.view_name == 'apps.dashboard.views.dashboard_view' %}active{% endif %}"> 
+            <i class="fas fa-home"></i>
+            <span>Trang chủ</span>
+        </a>
+        
+        <a href="{% if user.is_staff %}{% url 'admin:index' %}{% else %}#{% endif %}" 
+           class="nav-item {% if request.resolver_match.app_name == 'admin' %}active{% endif %}">
+            <i class="fas fa-cog"></i>
+            <span>Quản lý</span>
+        </a>
+    </nav>
+
+    {% block extra_js %}{% endblock extra_js %}
+</body>
+</html>

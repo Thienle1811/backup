@@ -1,0 +1,52 @@
+        {% extends 'base.html' %}
+
+        {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+
+        {% block page_header %}
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold text-gray-900">
+                    {{ page_title }}
+                </h1>
+            </div>
+        </header>
+        {% endblock page_header %}
+
+        {% block content %}
+        <main>
+            <div class="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+                    <div class="text-center">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 class="mt-2 text-lg leading-6 font-medium text-gray-900">Xác nhận Xóa Phiếu Xét nghiệm</h3>
+                        <div class="mt-2 px-7 py-3">
+                            <p class="text-sm text-gray-500">
+                                {{ confirm_message }}
+                            </p>
+                            {% if lab_test_instance %}
+                            <p class="mt-1 text-sm text-gray-700"><strong>Bệnh nhân:</strong> {{ lab_test_instance.medical_record.patient.full_name }}</p>
+                            <p class="text-sm text-gray-700"><strong>Mẫu xét nghiệm:</strong> {{ lab_test_instance.template.name }}</p>
+                            <p class="text-sm text-gray-700"><strong>Ngày yêu cầu:</strong> {{ lab_test_instance.requested_at|date:"d/m/Y H:i" }}</p>
+                            {% endif %}
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="items-center px-4 py-3">
+                                <button type="submit" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    Xác nhận Xóa
+                                </button>
+                                <a href="{% url 'labtests:lab_test_list' %}" class="ml-3 px-4 py-2 bg-gray-200 text-gray-700 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                    Hủy bỏ
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+        {% endblock content %}
+        
