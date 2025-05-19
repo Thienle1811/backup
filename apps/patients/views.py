@@ -1,41 +1,32 @@
         # apps/patients/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import Patient
 from .forms import PatientForm
-from django.db.models import Q # Import Q object để tạo các truy vấn phức tạp (OR)
+from django.db.models import Q
+from django.utils.translation import gettext_lazy as _ # Import cho các thông báo
 
+@login_required
 def patient_list(request):
-            """
-            View để hiển thị danh sách tất cả bệnh nhân, có hỗ trợ tìm kiếm.
-            """
-            query = request.GET.get('q', '') # Lấy từ khóa tìm kiếm từ request.GET, mặc định là chuỗi rỗng
-            
-            # Bắt đầu với tất cả bệnh nhân
+            query = request.GET.get('q', '')
             patients_queryset = Patient.objects.all()
-
             if query:
-                # Nếu có từ khóa tìm kiếm, lọc danh sách bệnh nhân
-                # Tìm kiếm trong các trường: full_name, email, phone
-                # Q objects được dùng để kết hợp các điều kiện tìm kiếm bằng OR
                 patients_queryset = patients_queryset.filter(
-                    Q(full_name__icontains=query) |  # icontains: không phân biệt chữ hoa/thường
+                    Q(full_name__icontains=query) |
                     Q(email__icontains=query) |
                     Q(phone__icontains=query)
-                ).distinct() # distinct() để tránh các kết quả trùng lặp nếu một bệnh nhân khớp nhiều điều kiện
-
-            # Sắp xếp kết quả
+                ).distinct()
             patients = patients_queryset.order_by('full_name')
-            
             context = {
                 'patients': patients,
-                'page_title': 'Danh sách Bệnh nhân',
-                'search_query': query, # Truyền lại từ khóa tìm kiếm để hiển thị trong template
-                'patient_count': patients.count() # Đếm số lượng bệnh nhân sau khi lọc
+                'page_title': _('Danh sách Bệnh nhân'), # Việt hóa
+                'search_query': query,
+                'patient_count': patients.count()
             }
             return render(request, 'patients/patient_list.html', context)
 
-        # --- Các views patient_create, patient_update, patient_delete giữ nguyên như trước ---
+@login_required
 def patient_create(request):
             if request.method == 'POST':
                 form = PatientForm(request.POST)
@@ -44,21 +35,22 @@ def patient_create(request):
                     if request.user.is_authenticated:
                         patient.created_by = request.user
                     patient.save()
-                    messages.success(request, f"Đã thêm bệnh nhân '{patient.full_name}' thành công!")
+                    messages.success(request, _("Đã thêm bệnh nhân '{name}' thành công!").format(name=patient.full_name)) # Việt hóa
                     return redirect('patients:patient_list')
                 else:
-                    messages.error(request, "Vui lòng sửa các lỗi trong form.")
+                    messages.error(request, _("Vui lòng sửa các lỗi trong form.")) # Việt hóa
             else:
                 form = PatientForm()
             
             context = {
                 'form': form,
-                'page_title': 'Thêm Bệnh nhân Mới',
-                'form_title': 'Thông tin Bệnh nhân Mới',
-                'submit_button_text': 'Lưu Bệnh nhân'
+                'page_title': _('Thêm Bệnh nhân Mới'), # Việt hóa
+                'form_title': _('Thông tin Bệnh nhân Mới'), # Việt hóa
+                'submit_button_text': _('Lưu Bệnh nhân') # Việt hóa
             }
             return render(request, 'patients/patient_form.html', context)
 
+@login_required
 def patient_update(request, pk):
             patient_instance = get_object_or_404(Patient, pk=pk)
             if request.method == 'POST':
@@ -68,33 +60,34 @@ def patient_update(request, pk):
                     if request.user.is_authenticated:
                         updated_patient.updated_by = request.user
                     updated_patient.save()
-                    messages.success(request, f"Đã cập nhật thông tin bệnh nhân '{updated_patient.full_name}' thành công!")
+                    messages.success(request, _("Đã cập nhật thông tin bệnh nhân '{name}' thành công!").format(name=updated_patient.full_name)) # Việt hóa
                     return redirect('patients:patient_list')
                 else:
-                    messages.error(request, "Vui lòng sửa các lỗi trong form.")
+                    messages.error(request, _("Vui lòng sửa các lỗi trong form.")) # Việt hóa
             else:
                 form = PatientForm(instance=patient_instance)
             
             context = {
                 'form': form,
-                'page_title': f'Cập nhật Bệnh nhân: {patient_instance.full_name}',
-                'form_title': 'Cập nhật Thông tin Bệnh nhân',
-                'submit_button_text': 'Lưu Thay đổi',
+                'page_title': _("Cập nhật Bệnh nhân: {name}").format(name=patient_instance.full_name), # Việt hóa
+                'form_title': _('Cập nhật Thông tin Bệnh nhân'), # Việt hóa
+                'submit_button_text': _('Lưu Thay đổi'), # Việt hóa
                 'patient_instance': patient_instance
             }
             return render(request, 'patients/patient_form.html', context)
 
+@login_required
 def patient_delete(request, pk):
             patient_instance = get_object_or_404(Patient, pk=pk)
+            patient_name = patient_instance.full_name
             if request.method == 'POST':
-                patient_name = patient_instance.full_name
                 patient_instance.delete()
-                messages.success(request, f"Đã xóa bệnh nhân '{patient_name}' thành công!")
+                messages.success(request, _("Đã xóa bệnh nhân '{name}' thành công!").format(name=patient_name)) # Việt hóa
                 return redirect('patients:patient_list')
             context = {
                 'patient': patient_instance,
-                'page_title': f'Xác nhận Xóa Bệnh nhân: {patient_instance.full_name}',
-                'confirm_message': f"Bạn có chắc chắn muốn xóa bệnh nhân '{patient_instance.full_name}' không? Hành động này không thể hoàn tác."
+                'page_title': _("Xác nhận Xóa Bệnh nhân: {name}").format(name=patient_name), # Việt hóa
+                'confirm_message': _("Bạn có chắc chắn muốn xóa bệnh nhân '{name}' không? Hành động này không thể hoàn tác.").format(name=patient_name) # Việt hóa
             }
             return render(request, 'patients/patient_confirm_delete.html', context)
         

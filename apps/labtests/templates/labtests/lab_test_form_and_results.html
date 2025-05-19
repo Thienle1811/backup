@@ -40,7 +40,7 @@
                                     {% endif %}
                                 </label>
                                 <div class="mt-1">
-                                    {{ field }}
+                                    {{ field }} {# Django sẽ render widget với class đã định nghĩa trong forms.py #}
                                 </div>
                                 {% if field.help_text %}
                                     <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
@@ -71,7 +71,7 @@
                         {% for result_form in result_formset %}
                             <div class="p-2 border border-gray-200 rounded-md bg-gray-50 result-formset-row">
                                 {% for hidden_field in result_form.hidden_fields %}{{ hidden_field }}{% endfor %}
-                                {{ result_form.template_field }} 
+                                {{ result_form.template_field }} {# Trường này ẩn, JS sẽ điền value #}
 
                                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-2 gap-y-2 items-start">
                                     <div class="sm:col-span-4">
@@ -79,6 +79,8 @@
                                         <input type="text" readonly 
                                                class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-name-display" 
                                                value="{{ result_form.initial.template_field_name|default:result_form.instance.template_field.field_name|default_if_none:'' }}">
+                                        {# Lỗi cho template_field (nếu có, thường là không vì nó ẩn và được JS điền) #}
+                                        {% for error in result_form.template_field.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
                                     </div>
                                     <div class="sm:col-span-2">
                                         <label for="{{ result_form.value.id_for_label }}" class="block text-xs font-medium text-gray-700 sm:hidden">{{ result_form.value.label }}</label>

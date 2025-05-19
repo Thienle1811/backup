@@ -37,6 +37,7 @@ urlpatterns = [
     path('medical-records/', include('apps.medical_records.urls', namespace='medical_records')),
     path('appointments/', include('apps.appointments.urls', namespace='appointments')),
     path('lab-tests/', include('apps.labtests.urls', namespace='labtests')),
+    path('management/accounts/', include('apps.accounts.urls', namespace='accounts_admin')), 
 
     # Bạn có thể thêm các include cho các app khác ở đây sau này, ví dụ:
     # path('lab-tests/', include('apps.labtests.urls', namespace='labtests')),

@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import dotenv # Thêm dòng này
-import os     # Dòng này có thể đã có sẵn, nếu chưa thì thêm vào
-dotenv.load_dotenv() # Thêm dòng này
+import dotenv
+import os
+dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crispy_forms',         # Thêm dòng này
-    'crispy_tailwind',      # Thêm dòng này
+    'crispy_forms',         # Nếu bạn vẫn dùng, giữ lại
+    'crispy_tailwind',      # Nếu bạn vẫn dùng, giữ lại
     'apps.accounts.apps.AccountsConfig',
     'apps.patients.apps.PatientsConfig',
     'apps.medical_records.apps.MedicalRecordsConfig',
@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware', # <<< THÊM MIDDLEWARE NÀY ĐỂ HỖ TRỢ ĐA NGÔN NGỮ TỐT HƠN
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -67,7 +68,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], # DÒNG QUAN TRỌNG ĐÂY!
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -93,7 +94,7 @@ DATABASES = {
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'HOST': os.environ.get('POSTGRES_HOST'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'), # Dùng 5432 nếu không có trong .env
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
 
@@ -120,24 +121,52 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'vi'  # <<< ĐÃ THAY ĐỔI
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Ho_Chi_Minh' # <<< ĐÃ THAY ĐỔI
 
 USE_I18N = True
 
+USE_L10N = True # (Trong Django 5.0+ gọi là USE_FORMAT_L10N, nhưng USE_L10N vẫn hoạt động và bao hàm nó)
+                # Đảm bảo là True để định dạng ngày tháng, số theo locale.
+
 USE_TZ = True
+
+
+# (Tùy chọn) Nếu bạn muốn hỗ trợ nhiều ngôn ngữ và cho phép người dùng chọn
+# from django.utils.translation import gettext_lazy as _
+# LANGUAGES = [
+#     ('vi', _('Tiếng Việt')),
+#     ('en', _('English')),
+# ]
+# Thư mục chứa các file .po và .mo cho việc dịch thuật
+# LOCALE_PATHS = [
+#     BASE_DIR / 'locale',
+# ]
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# (Tùy chọn) Nếu bạn có các tệp tĩnh chung cho toàn bộ dự án không thuộc app nào
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static_project_level", 
+# ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# Cấu hình cho django-crispy-forms (nếu bạn vẫn giữ lại)
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
+
+# Cài đặt cho Login (nếu bạn tạo trang login riêng sau này)
+# LOGIN_URL = 'accounts:login' # Ví dụ
+# LOGIN_REDIRECT_URL = 'dashboard:dashboard_home' # Ví dụ
+# LOGOUT_REDIRECT_URL = 'dashboard:dashboard_home' # Ví dụ
+
