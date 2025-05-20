@@ -89,9 +89,10 @@
             <span>Xét nghiệm</span>
         </a>
         
-        <a href="#" class="nav-item {% if request.resolver_match.app_name == 'search' %}active{% endif %}"> 
+        <a href="{% if user.is_authenticated %}{% url 'medical_records:medical_record_list' %}{% else %}#{% endif %}" 
+            class="nav-item {% if request.resolver_match.app_name == 'search' %}active{% endif %}"> 
             <i class="fas fa-search"></i>
-            <span>Tìm kiếm</span>
+            <span>Hồ Sơ Bệnh Án</span>
         </a>
         
         <a href="{% if user.is_authenticated %}{% url 'home_dashboard' %}{% else %}#{% endif %}" 

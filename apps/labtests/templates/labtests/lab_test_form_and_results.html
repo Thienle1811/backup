@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %} {# Đảm bảo bạn có load i18n nếu dùng translate tag #}
+{% load i18n %}
 
 {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
 
@@ -15,6 +15,19 @@
 
 {% block content %}
 <main>
+    {# Thêm các thẻ span ẩn để lưu trữ dữ liệu từ Django cho JavaScript #}
+    <span id="labtest-js-config" 
+          data-ajax-url-base="{% url 'labtests:ajax_get_template_fields' template_id=0 %}"
+          style="display: none;">
+    </span>
+    <span id="labtest-instance-config"
+          data-is-instance="{{ lab_test_instance.pk|yesno:'true,false' }}"
+          {% if lab_test_instance and lab_test_instance.template_id %}
+          data-current-template-id="{{ lab_test_instance.template_id }}"
+          {% endif %}
+          style="display: none;">
+    </span>
+
     <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
 
@@ -22,19 +35,30 @@
             <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
                 <h3 class="text-xl font-semibold text-blue-700">
                     {% translate "Tạo phiếu xét nghiệm cho bệnh nhân" %}: {{ selected_patient.full_name }}
-                    <span class="text-sm text-gray-600">(ID: {{ selected_patient.pk }})</span>
+                    <span class="text-sm text-gray-600">({% translate "Mã BN" %}: {{ selected_patient.ma_benh_nhan }})</span>
                 </h3>
                 {% if initial_medical_record_pk %}
                      <p class="text-sm text-gray-600 mt-1">
                         {% blocktranslate with mr_id=initial_medical_record_pk %}Hồ sơ bệnh án mặc định (ID: {{ mr_id }}) đã được chọn. Bạn có thể thay đổi bên dưới nếu cần.{% endblocktranslate %}
                      </p>
                 {% elif selected_patient and not lab_test_form.fields.medical_record.queryset %}
-                     <p class="text-sm text-red-600 mt-1">{% translate "Bệnh nhân này chưa có Hồ sơ bệnh án nào. Vui lòng tạo HSBA trước hoặc chọn bệnh nhân khác có HSBA." %}</p>
+                     <p class="text-sm text-red-600 mt-1">{% blocktranslate with patient_name=selected_patient.full_name %}Bệnh nhân {{ patient_name }} chưa có Hồ sơ bệnh án nào. Vui lòng tạo HSBA trước hoặc chọn bệnh nhân khác có HSBA.{% endblocktranslate %}</p>
                 {% elif selected_patient %}
                      <p class="text-sm text-yellow-700 bg-yellow-50 p-2 mt-1 rounded-md">{% translate "Vui lòng chọn một Hồ sơ bệnh án cho bệnh nhân này từ danh sách bên dưới." %}</p>
                 {% endif %}
             </div>
+            {% elif lab_test_instance and lab_test_instance.pk %}
+             <div class="mb-6 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
+                <h3 class="text-xl font-semibold text-yellow-800">
+                    {% translate "Sửa kết quả cho Phiếu Xét nghiệm ID" %}: {{ lab_test_instance.custom_id|default_if_none:lab_test_instance.pk }}
+                </h3>
+                <p class="text-sm text-gray-700 mt-1">
+                    {% translate "Bệnh nhân" %}: {{ lab_test_instance.medical_record.patient.full_name }} 
+                    ({% translate "Mã BN" %}: {{ lab_test_instance.medical_record.patient.ma_benh_nhan }})
+                </p>
+             </div>
             {% endif %}
+
 
             <form method="post" novalidate>
                 {% csrf_token %}
@@ -49,7 +73,7 @@
                             {% for form_in_set in result_formset %}
                                 {% for field, errors in form_in_set.errors.items %}
                                     {% for error in errors %}
-                                        <li>{% if form_in_set.prefix %}{{form_in_set.prefix}}-{% endif %}{{ field }}: {{ error }}</li>
+                                        <li>{% if form_in_set.prefix %}{{form_in_set.prefix}}-{% endif %}{{ field.label|default:field }}: {{ error }}</li>
                                     {% endfor %}
                                 {% endfor %}
                             {% endfor %}
@@ -84,7 +108,10 @@
 
                 <div class="mt-8">
                     <h3 class="text-lg font-medium leading-6 text-gray-900 mb-1">{% translate "Nhập Kết quả Chi tiết" %}</h3>
-                    <p class="text-sm text-gray-500 mb-4">{% translate 'Chọn "Mẫu Xét nghiệm Áp dụng" ở trên để hiển thị các chỉ số cần nhập.' %}</p>
+                    {% if not lab_test_instance or not lab_test_instance.template %}
+                        <p class="text-sm text-gray-500 mb-4">{% translate 'Chọn "Mẫu Xét nghiệm Áp dụng" ở trên để hiển thị các chỉ số cần nhập.' %}</p>
+                    {% endif %}
+                    
 
                     <div class="hidden sm:grid grid-cols-12 gap-x-2 gap-y-2 mb-2 text-xs font-medium text-gray-500 uppercase items-center">
                         <div class="col-span-4 pl-1">{% translate "Tên chỉ số" %}</div>
@@ -133,6 +160,7 @@
                         {% endfor %}
                     </div>
                     <div id="empty-result-form-template" style="display:none;">
+                        {# Nội dung của empty_form giữ nguyên như trước #}
                         <div class="p-2 border border-gray-200 rounded-md bg-gray-50 result-formset-row">
                             {% for hidden_field in result_formset.empty_form.hidden_fields %}{{ hidden_field }}{% endfor %}
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-2 gap-y-2 items-start">
@@ -148,11 +176,11 @@
 
                 <div class="pt-8">
                     <div class="flex justify-end space-x-3">
-                        <a href="{{ request.META.HTTP_REFERER|default_if_none:'labtests:lab_test_list' }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'labtests:lab_test_list' %}{% endif %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             {% translate "Hủy" %}
                         </a>
                         <button type="submit" name="action" value="save" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            {% translate "Lưu Kết quả" %}
+                            {{ submit_button_text|default:_("Lưu Kết quả") }}
                         </button>
                         <button type="submit" name="action" value="save_and_print" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             {% translate "Lưu và In" %}
@@ -163,16 +191,30 @@
         </div>
     </div>
 </main>
-{% endblock content %} {# ĐẢM BẢO DÒNG NÀY CÓ Ở CUỐI CÙNG CỦA KHỐI content #}
+{% endblock content %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const configElement = document.getElementById('labtest-js-config');
+    let rawUrl = '';
+    if (configElement) {
+        rawUrl = configElement.getAttribute('data-ajax-url-base');
+    } else {
+        console.error('Phần tử cấu hình #labtest-js-config không tìm thấy. URL AJAX cho các trường mẫu sẽ không hoạt động.');
+    }
+    // Sử dụng rawUrl trực tiếp nếu nó không rỗng, nếu không thì dùng một đường dẫn cố định (có thể gây lỗi nếu Django không phục vụ ở đó)
+    const getFieldsUrlBase = rawUrl ? rawUrl.replace('/0/', '/') : '/labtests/ajax/get-template-fields/';
+
+
+    const instanceConfigElement = document.getElementById('labtest-instance-config');
+    const currentTemplateId = instanceConfigElement ? instanceConfigElement.getAttribute('data-current-template-id') : null;
+    const isInstance = instanceConfigElement ? instanceConfigElement.getAttribute('data-is-instance') === 'true' : false;
+
     const templateSelector = document.getElementById('id_lab_test_template_selector');
     const resultsContainer = document.getElementById('lab-test-results-container');
     const emptyFormTemplateHTML = document.getElementById('empty-result-form-template').innerHTML;
     const totalFormsInput = document.querySelector('input[name="results-TOTAL_FORMS"]');
-    const getFieldsUrlBase = "{% url 'labtests:ajax_get_template_fields' template_id=0 %}".replace('/0/', '/');
 
     function addNewResultForm(fieldData, index) {
         let formIdx = index;
@@ -180,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = newFormHtml;
         const newFormRow = tempDiv.firstElementChild;
-        if (!newFormRow) { console.error("Could not create new result form row."); return; }
+        if (!newFormRow) { console.error("Không thể tạo dòng form kết quả mới."); return; }
 
         const nameDisplay = newFormRow.querySelector('.template-field-name-display');
         const refRangeDisplay = newFormRow.querySelector('.template-field-ref-range-display');
@@ -190,25 +232,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (nameDisplay) nameDisplay.value = fieldData.field_name || '';
         if (refRangeDisplay) refRangeDisplay.value = fieldData.reference_range_text || '';
         if (unitDisplay) unitDisplay.value = fieldData.unit || '';
+        
         if (templateFieldInput) {
             templateFieldInput.value = fieldData.id || '';
-        } else {
-            // console.warn(`Could not find template_field input for form index ${formIdx}. Ensure name is 'results-${formIdx}-template_field'.`);
         }
         resultsContainer.appendChild(newFormRow);
     }
 
-    if (templateSelector && totalFormsInput && resultsContainer && document.getElementById('empty-result-form-template')) { // Kiểm tra cả empty-result-form-template
+    if (templateSelector && totalFormsInput && resultsContainer && document.getElementById('empty-result-form-template')) {
         templateSelector.addEventListener('change', function() {
             const templateId = this.value;
             resultsContainer.innerHTML = '';
             totalFormsInput.value = 0;
 
-            if (templateId) {
+            if (templateId && getFieldsUrlBase) { // Kiểm tra getFieldsUrlBase có giá trị
                 fetch(`${getFieldsUrlBase}${templateId}/`)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            throw new Error(`Lỗi HTTP! Trạng thái: ${response.status}`);
                         }
                         return response.json();
                     })
@@ -221,39 +262,49 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                             totalFormsInput.value = currentTotalForms;
                         } else if (data.error) {
-                            // console.error("Error fetching template fields from server:", data.error);
-                            resultsContainer.innerHTML = `<p class="text-red-500 p-2">{% translate "Lỗi khi tải các chỉ số: " %} ${data.error}</p>`;
+                            resultsContainer.innerHTML = `<p class="text-red-500 p-2">Lỗi khi tải các chỉ số: ${data.error}</p>`;
                         } else {
-                            resultsContainer.innerHTML = `<p class="text-gray-500 p-2">{% translate "Mẫu xét nghiệm này chưa có chỉ số nào được định nghĩa." %}</p>`;
+                             resultsContainer.innerHTML = `<p class="text-gray-500 p-2">Mẫu xét nghiệm này chưa có chỉ số nào được định nghĩa.</p>`;
                         }
                     })
                     .catch(error => {
-                        // console.error('Could not fetch template fields due to network or parsing error:', error);
-                        resultsContainer.innerHTML = `<p class="text-red-500 p-2">{% translate "Lỗi kết nối khi tải các chỉ số xét nghiệm. Vui lòng thử lại." %}</p>`;
+                        console.error('Không thể tải các trường mẫu:', error);
+                        resultsContainer.innerHTML = `<p class="text-red-500 p-2">Lỗi kết nối khi tải các chỉ số xét nghiệm. Vui lòng thử lại.</p>`;
                     });
+            } else if (!templateId) {
+                // Xử lý khi không có template nào được chọn (ví dụ: xóa các trường)
+                resultsContainer.innerHTML = '';
+                totalFormsInput.value = 0;
+            } else if (!getFieldsUrlBase) {
+                resultsContainer.innerHTML = `<p class="text-red-500 p-2">Lỗi cấu hình: Không thể xác định URL để tải chỉ số.</p>`;
             }
         });
-        if (templateSelector.value) {
-            templateSelector.dispatchEvent(new Event('change'));
+
+        // Xử lý việc dispatch event ban đầu
+        if (templateSelector.value && resultsContainer.children.length === 0) {
+            if (isInstance && currentTemplateId) {
+                if (templateSelector.value === currentTemplateId) {
+                     templateSelector.dispatchEvent(new Event('change'));
+                }
+            } else if (!isInstance) {
+                 if (templateSelector.value) {
+                    templateSelector.dispatchEvent(new Event('change'));
+                 }
+            }
         }
     } else {
-        // if (!templateSelector) console.error("Template selector (id_lab_test_template_selector) not found.");
-        // if (!totalFormsInput) console.error("Total forms input (input[name=\"results-TOTAL_FORMS\"]) not found.");
-        // if (!resultsContainer) console.error("Results container (lab-test-results-container) not found.");
-        // if (!document.getElementById('empty-result-form-template')) console.error("Empty form template (empty-result-form-template) not found.");
+        // Ghi log lỗi nếu thiếu các phần tử DOM cần thiết
+        if (!templateSelector) console.error("Không tìm thấy #id_lab_test_template_selector.");
+        if (!totalFormsInput) console.error("Không tìm thấy input[name=\"results-TOTAL_FORMS\"].");
+        if (!resultsContainer) console.error("Không tìm thấy #lab-test-results-container."); // Đã sửa lỗi typo ở đây
+        if (!document.getElementById('empty-result-form-template')) console.error("Không tìm thấy #empty-result-form-template.");
     }
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('print_on_load') === 'true' && urlParams.get('lab_test_id')) {
         const labTestIdForPrint = urlParams.get('lab_test_id');
-        // Cần một cách để lấy URL của generate_lab_test_pdf một cách an toàn.
-        // Giả sử rằng bạn có một biến JavaScript global hoặc một cách khác để lấy URL này nếu lab_test_instance không có sẵn ở đây.
-        // Cách an toàn hơn là server redirect trực tiếp tới PDF nếu có thể.
-        // Nếu không, bạn cần đảm bảo URL này được tạo đúng.
-        // Ví dụ tạm:
         if (labTestIdForPrint) {
-            const pdfUrl = `/lab-tests/${labTestIdForPrint}/pdf/`; // Đây là ví dụ, cần URL đúng
-            // const pdfUrl = "{% url 'labtests:generate_lab_test_pdf' lab_test_id=0 %}".replace('0', labTestIdForPrint); // Cách này chỉ hoạt động nếu template tag được render đúng lúc
+            const pdfUrl = `/lab-tests/${labTestIdForPrint}/pdf/`; // Cần đảm bảo URL này đúng
             window.open(pdfUrl, '_blank');
             const newUrl = window.location.pathname;
             window.history.replaceState({}, document.title, newUrl);

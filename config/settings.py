@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import dotenv
 import os
+
+# Tải biến môi trường từ file .env
 dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,10 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-fallback-key-if-not-set') # Thêm fallback key cho dev
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True # os.environ.get('DJANGO_DEBUG', 'False') == 'True' # Nên lấy từ biến môi trường
 
 ALLOWED_HOSTS = []
 
@@ -40,8 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crispy_forms',         # Nếu bạn vẫn dùng, giữ lại
-    'crispy_tailwind',      # Nếu bạn vẫn dùng, giữ lại
+    'crispy_forms',         # Giữ lại nếu bạn dùng
+    'crispy_tailwind',      # Giữ lại nếu bạn dùng
     'apps.accounts.apps.AccountsConfig',
     'apps.patients.apps.PatientsConfig',
     'apps.medical_records.apps.MedicalRecordsConfig',
@@ -55,7 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware', # <<< THÊM MIDDLEWARE NÀY ĐỂ HỖ TRỢ ĐA NGÔN NGỮ TỐT HƠN
+    'django.middleware.locale.LocaleMiddleware', # Hỗ trợ đa ngôn ngữ
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -68,8 +70,9 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
-        'APP_DIRS': True,
+        # Đảm bảo Django tìm thấy thư mục templates ở gốc dự án
+        'DIRS': [BASE_DIR / 'templates'], 
+        'APP_DIRS': True, # Cho phép Django tìm template trong thư mục 'templates' của mỗi app
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -86,13 +89,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-import os
-from dotenv import load_dotenv
-
-# Load biến môi trường từ file .env
-
-
-
 
 DATABASES = {
     'default': {
@@ -128,52 +124,53 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'vi'  # <<< ĐÃ THAY ĐỔI
+LANGUAGE_CODE = 'vi'
 
-TIME_ZONE = 'Asia/Ho_Chi_Minh' # <<< ĐÃ THAY ĐỔI
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 USE_I18N = True
 
-USE_L10N = True # (Trong Django 5.0+ gọi là USE_FORMAT_L10N, nhưng USE_L10N vẫn hoạt động và bao hàm nó)
-                # Đảm bảo là True để định dạng ngày tháng, số theo locale.
-
 USE_TZ = True
-
-
-# (Tùy chọn) Nếu bạn muốn hỗ trợ nhiều ngôn ngữ và cho phép người dùng chọn
-# from django.utils.translation import gettext_lazy as _
-# LANGUAGES = [
-#     ('vi', _('Tiếng Việt')),
-#     ('en', _('English')),
-# ]
-# Thư mục chứa các file .po và .mo cho việc dịch thuật
-# LOCALE_PATHS = [
-#     BASE_DIR / 'locale',
-# ]
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-# (Tùy chọn) Nếu bạn có các tệp tĩnh chung cho toàn bộ dự án không thuộc app nào
 # STATICFILES_DIRS = [
-#     BASE_DIR / "static_project_level", 
+#     BASE_DIR / "static", # Nếu bạn có thư mục static ở gốc dự án
 # ]
+# STATIC_ROOT = BASE_DIR / "staticfiles" # Cho collectstatic khi deploy
+
+# Media files (Uploaded files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Cấu hình cho django-crispy-forms (nếu bạn vẫn giữ lại)
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
 
-# Cài đặt cho Login (nếu bạn tạo trang login riêng sau này)
-# LOGIN_URL = 'accounts:login' # Ví dụ
-# LOGIN_REDIRECT_URL = 'dashboard:dashboard_home' # Ví dụ
-# LOGOUT_REDIRECT_URL = 'dashboard:dashboard_home' # Ví dụ
+# Cài đặt cho Login và Logout (QUAN TRỌNG)
+LOGIN_URL = 'login' 
+LOGIN_REDIRECT_URL = 'patients:patient_list' # Chuyển hướng đến danh sách bệnh nhân sau khi đăng nhập
+LOGOUT_REDIRECT_URL = 'login' 
 
+# Cấu hình ngôn ngữ (nếu bạn muốn hỗ trợ nhiều ngôn ngữ)
+from django.utils.translation import gettext_lazy as _
+LANGUAGES = [
+    ('vi', _('Tiếng Việt')),
+    ('en', _('English')),
+]
+# Thư mục chứa các file .po và .mo cho việc dịch thuật
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]

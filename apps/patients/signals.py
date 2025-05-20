@@ -1,18 +1,21 @@
-from django.db.models.signals import post_save, post_delete # Import các tín hiệu cần thiết
-from django.dispatch import receiver # Decorator để kết nối hàm với tín hiệu
+# apps/patients/signals.py
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from apps.accounts.models import CustomUser # Để kiểm tra kiểu của user
 from apps.activity_logs.models import ActivityLog # Model để ghi log
 from .models import Patient # Model Patient của chúng ta
 
-# Hàm này sẽ được gọi sau khi một đối tượng Patient được lưu
+# Import cho chức năng tự động tạo MedicalRecord
+from apps.medical_records.models import MedicalRecord, MedicalRecordVersion
+from django.utils import timezone
+
+# --- Ghi log hoạt động cho Patient (Giữ lại nếu bạn đã có) ---
 @receiver(post_save, sender=Patient)
 def log_patient_saved(sender, instance, created, raw, using, update_fields, **kwargs):
     """
     Ghi log khi một đối tượng Patient được tạo mới hoặc cập nhật.
     """
-    # Bỏ qua nếu đây là việc load dữ liệu thô (raw fixture loading)
-    if raw:
+    if raw: # Bỏ qua nếu đây là việc load dữ liệu thô
         return
 
     user = None
@@ -25,14 +28,12 @@ def log_patient_saved(sender, instance, created, raw, using, update_fields, **kw
         if instance.created_by:
             user = instance.created_by
     else:
-        # Nếu là cập nhật, cố gắng lấy người cập nhật
-        if instance.updated_by:
+        if instance.updated_by: # Nếu là cập nhật, cố gắng lấy người cập nhật
             user = instance.updated_by
 
-    # Lấy ContentType của model Patient
     try:
         patient_content_type = ContentType.objects.get_for_model(instance)
-    except Exception: # Xử lý trường hợp ContentType chưa sẵn sàng (hiếm khi xảy ra ở đây)
+    except Exception:
         patient_content_type = None
 
     if patient_content_type:
@@ -41,39 +42,43 @@ def log_patient_saved(sender, instance, created, raw, using, update_fields, **kw
             action=action,
             content_type=patient_content_type,
             object_id=instance.pk,
-            target_object=instance, # Gán trực tiếp đối tượng
+            target_object=instance,
             details=details
-            # ip_address và user_agent sẽ cần lấy từ request nếu có,
-            # điều này phức tạp hơn khi dùng model signals.
-            # Hiện tại chúng ta bỏ qua chúng.
         )
 
-# (Tùy chọn) Hàm này sẽ được gọi sau khi một đối tượng Patient bị xóa
+# (Tùy chọn) Ghi log khi Patient bị xóa (Giữ lại nếu bạn đã có)
 # @receiver(post_delete, sender=Patient)
 # def log_patient_deleted(sender, instance, using, **kwargs):
-#     """
-#     Ghi log khi một đối tượng Patient bị xóa.
-#     Lưu ý: Việc lấy 'user' đã thực hiện hành động xóa trong post_delete signal
-#     thường khó khăn hơn vì không có request object trực tiếp.
-#     Bạn có thể cần một giải pháp phức tạp hơn như middleware hoặc truyền user qua context.
-#     """
-#     user = None # Khó xác định user ở đây một cách đơn giản
-#     action = ActivityLog.ActionChoices.DELETED
-#     details = f"Bệnh nhân '{instance.full_name}' (ID: {instance.pk}) đã bị xóa."
+#     # ... (Code ghi log xóa của bạn ở đây) ...
+#     pass
 
-#     try:
-#         patient_content_type = ContentType.objects.get_for_model(instance)
-#     except Exception:
-#         patient_content_type = None
+# --- Tự động tạo MedicalRecord cho Patient mới ---
+@receiver(post_save, sender=Patient)
+def create_initial_medical_record_for_new_patient(sender, instance, created, **kwargs):
+    """
+    Tự động tạo một MedicalRecord và MedicalRecordVersion ban đầu
+    khi một Patient mới được tạo.
+    """
+    if created: # Chỉ thực hiện khi đối tượng Patient được tạo mới
+        # Tạo MedicalRecord
+        medical_record_instance = MedicalRecord.objects.create(
+            patient=instance,
+            record_date=instance.created_at.date(), # Sử dụng ngày tạo bệnh nhân làm ngày khám ban đầu
+            created_by=instance.created_by,    # Gán người tạo nếu có
+            updated_by=instance.created_by     # Gán người cập nhật nếu có
+            # diagnosis và notes sẽ để trống theo mặc định của model
+        )
 
-#     if patient_content_type:
-#         ActivityLog.objects.create(
-#             user=user, # Sẽ là None trong trường hợp này
-#             action=action,
-#             content_type=patient_content_type,
-#             object_id=instance.pk,
-#             # target_object sẽ không còn tồn tại sau khi xóa,
-#             # nên chúng ta không gán nó ở đây.
-#             # ContentType và object_id vẫn được lưu để biết đối tượng nào đã bị xóa.
-#             details=details
-#         )
+        # Tạo MedicalRecordVersion đầu tiên cho MedicalRecord vừa tạo
+        first_version = MedicalRecordVersion.objects.create(
+            medical_record=medical_record_instance,
+            version_number=1,
+            diagnosis=medical_record_instance.diagnosis, # Sẽ là None hoặc chuỗi rỗng
+            notes=medical_record_instance.notes,           # Sẽ là None hoặc chuỗi rỗng
+            changed_by=instance.created_by,      # Người thay đổi là người tạo bệnh nhân
+            change_reason="Hồ sơ bệnh án ban đầu được tạo tự động khi tạo bệnh nhân."
+        )
+        
+        # Cập nhật trường latest_version của MedicalRecord
+        medical_record_instance.latest_version = first_version
+        medical_record_instance.save(update_fields=['latest_version'])
