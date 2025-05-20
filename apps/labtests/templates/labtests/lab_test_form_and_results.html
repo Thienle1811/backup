@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
-{# {% load crispy_forms_tags %} #} {% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+{% load i18n %} {# Đảm bảo bạn có load i18n nếu dùng translate tag #}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
 
 {% block page_header %}
 <header class="bg-white shadow">
@@ -15,21 +17,48 @@
 <main>
     <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+
+            {% if selected_patient %}
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <h3 class="text-xl font-semibold text-blue-700">
+                    {% translate "Tạo phiếu xét nghiệm cho bệnh nhân" %}: {{ selected_patient.full_name }}
+                    <span class="text-sm text-gray-600">(ID: {{ selected_patient.pk }})</span>
+                </h3>
+                {% if initial_medical_record_pk %}
+                     <p class="text-sm text-gray-600 mt-1">
+                        {% blocktranslate with mr_id=initial_medical_record_pk %}Hồ sơ bệnh án mặc định (ID: {{ mr_id }}) đã được chọn. Bạn có thể thay đổi bên dưới nếu cần.{% endblocktranslate %}
+                     </p>
+                {% elif selected_patient and not lab_test_form.fields.medical_record.queryset %}
+                     <p class="text-sm text-red-600 mt-1">{% translate "Bệnh nhân này chưa có Hồ sơ bệnh án nào. Vui lòng tạo HSBA trước hoặc chọn bệnh nhân khác có HSBA." %}</p>
+                {% elif selected_patient %}
+                     <p class="text-sm text-yellow-700 bg-yellow-50 p-2 mt-1 rounded-md">{% translate "Vui lòng chọn một Hồ sơ bệnh án cho bệnh nhân này từ danh sách bên dưới." %}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <form method="post" novalidate>
                 {% csrf_token %}
-                
+                {{ result_formset.management_form }}
+
                 {% if lab_test_form.non_field_errors or result_formset.non_form_errors %}
                     <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-                        <h4 class="font-bold">Vui lòng sửa các lỗi sau:</h4>
+                        <h4 class="font-bold">{% translate "Vui lòng sửa các lỗi sau" %}:</h4>
                         <ul class="list-disc list-inside mt-2">
                             {% for error in lab_test_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
                             {% for error in result_formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+                            {% for form_in_set in result_formset %}
+                                {% for field, errors in form_in_set.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{% if form_in_set.prefix %}{{form_in_set.prefix}}-{% endif %}{{ field }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
                         </ul>
                     </div>
                 {% endif %}
 
                 <div class="mb-8 border-b border-gray-200 pb-8">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-3">Thông tin Phiếu Xét nghiệm</h3>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-3">{% translate "Thông tin Phiếu Xét nghiệm" %}</h3>
                     <div class="space-y-4">
                         {% for field in lab_test_form %}
                             <div>
@@ -40,7 +69,7 @@
                                     {% endif %}
                                 </label>
                                 <div class="mt-1">
-                                    {{ field }} {# Django sẽ render widget với class đã định nghĩa trong forms.py #}
+                                    {{ field }}
                                 </div>
                                 {% if field.help_text %}
                                     <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
@@ -52,34 +81,29 @@
                         {% endfor %}
                     </div>
                 </div>
-                
+
                 <div class="mt-8">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-1">Nhập Kết quả Chi tiết</h3>
-                    <p class="text-sm text-gray-500 mb-4">Chọn "Mẫu Xét nghiệm Áp dụng" ở trên để hiển thị các chỉ số cần nhập.</p>
-                    
-                    {{ result_formset.management_form }}
-                    
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-1">{% translate "Nhập Kết quả Chi tiết" %}</h3>
+                    <p class="text-sm text-gray-500 mb-4">{% translate 'Chọn "Mẫu Xét nghiệm Áp dụng" ở trên để hiển thị các chỉ số cần nhập.' %}</p>
+
                     <div class="hidden sm:grid grid-cols-12 gap-x-2 gap-y-2 mb-2 text-xs font-medium text-gray-500 uppercase items-center">
-                        <div class="col-span-4 pl-1">Tên chỉ số</div>
-                        <div class="col-span-2 pl-1">Kết quả</div>
-                        <div class="col-span-3 pl-1">Khoảng tham chiếu</div>
-                        <div class="col-span-1 pl-1">Đơn vị</div>
-                        <div class="col-span-2 pl-1">Bình luận</div>
+                        <div class="col-span-4 pl-1">{% translate "Tên chỉ số" %}</div>
+                        <div class="col-span-2 pl-1">{% translate "Kết quả" %}</div>
+                        <div class="col-span-3 pl-1">{% translate "Khoảng tham chiếu" %}</div>
+                        <div class="col-span-1 pl-1">{% translate "Đơn vị" %}</div>
+                        <div class="col-span-2 pl-1">{% translate "Bình luận" %}</div>
                     </div>
 
                     <div id="lab-test-results-container" class="space-y-2">
                         {% for result_form in result_formset %}
                             <div class="p-2 border border-gray-200 rounded-md bg-gray-50 result-formset-row">
                                 {% for hidden_field in result_form.hidden_fields %}{{ hidden_field }}{% endfor %}
-                                {{ result_form.template_field }} {# Trường này ẩn, JS sẽ điền value #}
-
                                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-2 gap-y-2 items-start">
                                     <div class="sm:col-span-4">
-                                        <label class="block text-xs font-medium text-gray-700 sm:hidden">Tên chỉ số</label>
-                                        <input type="text" readonly 
-                                               class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-name-display" 
+                                        <label class="block text-xs font-medium text-gray-700 sm:hidden">{% translate "Tên chỉ số" %}</label>
+                                        <input type="text" readonly
+                                               class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-name-display"
                                                value="{{ result_form.initial.template_field_name|default:result_form.instance.template_field.field_name|default_if_none:'' }}">
-                                        {# Lỗi cho template_field (nếu có, thường là không vì nó ẩn và được JS điền) #}
                                         {% for error in result_form.template_field.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
                                     </div>
                                     <div class="sm:col-span-2">
@@ -88,14 +112,14 @@
                                         {% for error in result_form.value.errors %}<p class="text-red-500 text-xs mt-1">{{error}}</p>{% endfor %}
                                     </div>
                                     <div class="sm:col-span-3">
-                                         <label class="block text-xs font-medium text-gray-700 sm:hidden">Khoảng tham chiếu</label>
-                                         <input type="text" readonly 
+                                         <label class="block text-xs font-medium text-gray-700 sm:hidden">{% translate "Khoảng tham chiếu" %}</label>
+                                         <input type="text" readonly
                                                class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-ref-range-display"
                                                value="{{ result_form.initial.template_field_ref_range|default:result_form.instance.template_field.reference_range_text|default_if_none:'' }}">
                                     </div>
                                     <div class="sm:col-span-1">
-                                        <label class="block text-xs font-medium text-gray-700 sm:hidden">Đơn vị</label>
-                                        <input type="text" readonly 
+                                        <label class="block text-xs font-medium text-gray-700 sm:hidden">{% translate "Đơn vị" %}</label>
+                                        <input type="text" readonly
                                                class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-unit-display"
                                                value="{{ result_form.initial.template_field_unit|default:result_form.instance.template_field.unit|default_if_none:'' }}">
                                     </div>
@@ -111,12 +135,11 @@
                     <div id="empty-result-form-template" style="display:none;">
                         <div class="p-2 border border-gray-200 rounded-md bg-gray-50 result-formset-row">
                             {% for hidden_field in result_formset.empty_form.hidden_fields %}{{ hidden_field }}{% endfor %}
-                            {{ result_formset.empty_form.template_field }}
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-2 gap-y-2 items-start">
-                                <div class="sm:col-span-4"><input type="text" readonly class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-name-display" name="fields-__prefix__-template_field_name_display_ignore"></div>
+                                <div class="sm:col-span-4"><input type="text" readonly class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-name-display" name="results-__prefix__-template_field_name_display_ignore"></div>
                                 <div class="sm:col-span-2">{{ result_formset.empty_form.value }}</div>
-                                <div class="sm:col-span-3"><input type="text" readonly class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-ref-range-display" name="fields-__prefix__-template_field_ref_range_display_ignore"></div>
-                                <div class="sm:col-span-1"><input type="text" readonly class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-unit-display" name="fields-__prefix__-template_field_unit_display_ignore"></div>
+                                <div class="sm:col-span-3"><input type="text" readonly class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-ref-range-display" name="results-__prefix__-template_field_ref_range_display_ignore"></div>
+                                <div class="sm:col-span-1"><input type="text" readonly class="form-control-plaintext form-control-sm bg-gray-100 border-0 p-2 w-full template-field-unit-display" name="results-__prefix__-template_field_unit_display_ignore"></div>
                                 <div class="sm:col-span-2">{{ result_formset.empty_form.comment }}</div>
                             </div>
                         </div>
@@ -124,12 +147,15 @@
                 </div>
 
                 <div class="pt-8">
-                    <div class="flex justify-end">
-                        <a href="{% url 'labtests:lab_test_template_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Hủy
+                    <div class="flex justify-end space-x-3">
+                        <a href="{{ request.META.HTTP_REFERER|default_if_none:'labtests:lab_test_list' }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            {% translate "Hủy" %}
                         </a>
-                        <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            {{ submit_button_text|default:"Lưu" }}
+                        <button type="submit" name="action" value="save" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            {% translate "Lưu Kết quả" %}
+                        </button>
+                        <button type="submit" name="action" value="save_and_print" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            {% translate "Lưu và In" %}
                         </button>
                     </div>
                 </div>
@@ -137,46 +163,46 @@
         </div>
     </div>
 </main>
-{% endblock content %}
+{% endblock content %} {# ĐẢM BẢO DÒNG NÀY CÓ Ở CUỐI CÙNG CỦA KHỐI content #}
 
 {% block extra_js %}
 <script>
-// Mã JavaScript giữ nguyên như phiên bản trước (ID: lab_test_form_and_results_html_full)
 document.addEventListener('DOMContentLoaded', function() {
-    const templateSelector = document.getElementById('id_lab_test_template_selector'); 
+    const templateSelector = document.getElementById('id_lab_test_template_selector');
     const resultsContainer = document.getElementById('lab-test-results-container');
     const emptyFormTemplateHTML = document.getElementById('empty-result-form-template').innerHTML;
     const totalFormsInput = document.querySelector('input[name="results-TOTAL_FORMS"]');
-    const getFieldsUrlBase = "{% url 'labtests:ajax_get_template_fields' template_id=0 %}".replace('/0/', '/'); 
+    const getFieldsUrlBase = "{% url 'labtests:ajax_get_template_fields' template_id=0 %}".replace('/0/', '/');
 
     function addNewResultForm(fieldData, index) {
         let formIdx = index;
         let newFormHtml = emptyFormTemplateHTML.replace(/__prefix__/g, formIdx);
-        
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = newFormHtml;
-        const newFormRow = tempDiv.firstElementChild; 
-        
+        const newFormRow = tempDiv.firstElementChild;
         if (!newFormRow) { console.error("Could not create new result form row."); return; }
 
         const nameDisplay = newFormRow.querySelector('.template-field-name-display');
         const refRangeDisplay = newFormRow.querySelector('.template-field-ref-range-display');
         const unitDisplay = newFormRow.querySelector('.template-field-unit-display');
-        const templateFieldInput = newFormRow.querySelector(`input[name="results-${formIdx}-template_field"]`); 
+        const templateFieldInput = newFormRow.querySelector(`input[name="results-${formIdx}-template_field"], select[name="results-${formIdx}-template_field"]`);
 
         if (nameDisplay) nameDisplay.value = fieldData.field_name || '';
         if (refRangeDisplay) refRangeDisplay.value = fieldData.reference_range_text || '';
         if (unitDisplay) unitDisplay.value = fieldData.unit || '';
-        if (templateFieldInput) templateFieldInput.value = fieldData.id || ''; 
-        
+        if (templateFieldInput) {
+            templateFieldInput.value = fieldData.id || '';
+        } else {
+            // console.warn(`Could not find template_field input for form index ${formIdx}. Ensure name is 'results-${formIdx}-template_field'.`);
+        }
         resultsContainer.appendChild(newFormRow);
     }
 
-    if (templateSelector && totalFormsInput) {
+    if (templateSelector && totalFormsInput && resultsContainer && document.getElementById('empty-result-form-template')) { // Kiểm tra cả empty-result-form-template
         templateSelector.addEventListener('change', function() {
             const templateId = this.value;
-            resultsContainer.innerHTML = ''; 
-            totalFormsInput.value = 0; 
+            resultsContainer.innerHTML = '';
+            totalFormsInput.value = 0;
 
             if (templateId) {
                 fetch(`${getFieldsUrlBase}${templateId}/`)
@@ -189,23 +215,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(data => {
                         if (data.fields && data.fields.length > 0) {
                             let currentTotalForms = 0;
-                            data.fields.forEach((field, index) => {
+                            data.fields.forEach((field) => {
                                 addNewResultForm(field, currentTotalForms);
                                 currentTotalForms++;
                             });
                             totalFormsInput.value = currentTotalForms;
                         } else if (data.error) {
-                            console.error("Error fetching template fields:", data.error);
+                            // console.error("Error fetching template fields from server:", data.error);
+                            resultsContainer.innerHTML = `<p class="text-red-500 p-2">{% translate "Lỗi khi tải các chỉ số: " %} ${data.error}</p>`;
+                        } else {
+                            resultsContainer.innerHTML = `<p class="text-gray-500 p-2">{% translate "Mẫu xét nghiệm này chưa có chỉ số nào được định nghĩa." %}</p>`;
                         }
                     })
                     .catch(error => {
-                        console.error('Could not fetch template fields:', error);
-                        resultsContainer.innerHTML = `<p class="text-red-500">Lỗi khi tải các chỉ số xét nghiệm. Vui lòng thử lại.</p>`;
+                        // console.error('Could not fetch template fields due to network or parsing error:', error);
+                        resultsContainer.innerHTML = `<p class="text-red-500 p-2">{% translate "Lỗi kết nối khi tải các chỉ số xét nghiệm. Vui lòng thử lại." %}</p>`;
                     });
             }
         });
-        if(templateSelector.value){
+        if (templateSelector.value) {
             templateSelector.dispatchEvent(new Event('change'));
+        }
+    } else {
+        // if (!templateSelector) console.error("Template selector (id_lab_test_template_selector) not found.");
+        // if (!totalFormsInput) console.error("Total forms input (input[name=\"results-TOTAL_FORMS\"]) not found.");
+        // if (!resultsContainer) console.error("Results container (lab-test-results-container) not found.");
+        // if (!document.getElementById('empty-result-form-template')) console.error("Empty form template (empty-result-form-template) not found.");
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('print_on_load') === 'true' && urlParams.get('lab_test_id')) {
+        const labTestIdForPrint = urlParams.get('lab_test_id');
+        // Cần một cách để lấy URL của generate_lab_test_pdf một cách an toàn.
+        // Giả sử rằng bạn có một biến JavaScript global hoặc một cách khác để lấy URL này nếu lab_test_instance không có sẵn ở đây.
+        // Cách an toàn hơn là server redirect trực tiếp tới PDF nếu có thể.
+        // Nếu không, bạn cần đảm bảo URL này được tạo đúng.
+        // Ví dụ tạm:
+        if (labTestIdForPrint) {
+            const pdfUrl = `/lab-tests/${labTestIdForPrint}/pdf/`; // Đây là ví dụ, cần URL đúng
+            // const pdfUrl = "{% url 'labtests:generate_lab_test_pdf' lab_test_id=0 %}".replace('0', labTestIdForPrint); // Cách này chỉ hoạt động nếu template tag được render đúng lúc
+            window.open(pdfUrl, '_blank');
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
         }
     }
 });

@@ -5,28 +5,31 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Max
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from .models import LabTestTemplate, LabTestTemplateField, LabTest, LabTestResultValue, LabTestVersion
-from apps.patients.models import Patient # Import Patient model
-from apps.medical_records.models import MedicalRecord # Import MedicalRecord model
+from apps.patients.models import Patient
+from apps.medical_records.models import MedicalRecord
 from .forms import (
-    LabTestTemplateForm, 
-    LabTestTemplateFieldFormSet, 
+    LabTestTemplateForm,
+    LabTestTemplateFieldFormSet,
     LabTestForm,
     LabTestResultValueFormSet
 )
 from django.utils import timezone
-import io # Đảm bảo import này có mặt
+import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm, mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, Table, TableStyle, Spacer, Image
+from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
-from django.conf import settings # Sửa lỗi import ở đây
+from django.conf import settings
 from reportlab.lib.utils import ImageReader
+
 
 # --- Views cho LabTestTemplate ---
 @login_required
@@ -39,8 +42,10 @@ def lab_test_template_list(request):
         ).distinct()
     templates = templates_queryset.order_by('name')
     context = {
-        'lab_test_templates': templates, 'page_title': 'Danh sách Mẫu Xét nghiệm',
-        'search_query': query, 'template_count': templates.count()
+        'lab_test_templates': templates,
+        'page_title': _('Danh sách Mẫu Xét nghiệm'),
+        'search_query': query,
+        'template_count': templates.count()
     }
     return render(request, 'labtests/lab_test_template_list.html', context)
 
@@ -51,31 +56,28 @@ def lab_test_template_create(request):
         formset = LabTestTemplateFieldFormSet(request.POST, prefix='fields')
         if form.is_valid() and formset.is_valid():
             try:
-                with transaction.atomic(): 
+                with transaction.atomic():
                     lab_test_template = form.save(commit=False)
                     if request.user.is_authenticated:
                         lab_test_template.created_by = request.user
-                    lab_test_template.save() 
+                    lab_test_template.save()
                     formset.instance = lab_test_template
                     formset.save()
-                    messages.success(request, f"Đã tạo mẫu xét nghiệm '{lab_test_template.name}' thành công!")
+                    messages.success(request, _("Đã tạo mẫu xét nghiệm '{name}' thành công!").format(name=lab_test_template.name))
                     return redirect('labtests:lab_test_template_list')
             except Exception as e:
-                messages.error(request, f"Có lỗi xảy ra khi lưu mẫu xét nghiệm: {e}")
-                print(f"Lỗi Exception khi lưu mẫu xét nghiệm: {e}") 
+                messages.error(request, _("Có lỗi xảy ra khi lưu mẫu xét nghiệm: {error}").format(error=e))
         else:
-            messages.error(request, "Vui lòng sửa các lỗi trong form chính và/hoặc các chỉ số của mẫu xét nghiệm.")
-            print("Lỗi Form Mẫu Xét Nghiệm (POST CREATE):", form.errors.as_json(escape_html=True))
-            print("Lỗi Formset Chỉ Số (POST CREATE):", formset.errors)
-            print("Lỗi Formset Non-form (Chỉ Số) (POST CREATE):", formset.non_form_errors())
+            messages.error(request, _("Vui lòng sửa các lỗi trong form chính và/hoặc các chỉ số của mẫu xét nghiệm."))
     else: # GET request
         form = LabTestTemplateForm()
-        formset = LabTestTemplateFieldFormSet(prefix='fields') 
-    
+        formset = LabTestTemplateFieldFormSet(prefix='fields')
+
     context = {
-        'form': form, 'formset': formset, 
-        'page_title': 'Thêm Mẫu Xét nghiệm Mới', 'form_title': 'Thông tin Mẫu Xét nghiệm',
-        'submit_button_text': 'Lưu Mẫu Xét nghiệm'
+        'form': form, 'formset': formset,
+        'page_title': _('Thêm Mẫu Xét nghiệm Mới'),
+        'form_title': _('Thông tin Mẫu Xét nghiệm'),
+        'submit_button_text': _('Lưu Mẫu Xét nghiệm')
     }
     return render(request, 'labtests/lab_test_template_form.html', context)
 
@@ -88,26 +90,22 @@ def lab_test_template_update(request, pk):
         if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
-                    updated_template = form.save() 
-                    formset.save() 
-                    messages.success(request, f"Đã cập nhật mẫu xét nghiệm '{updated_template.name}' thành công!")
+                    updated_template = form.save()
+                    formset.save()
+                    messages.success(request, _("Đã cập nhật mẫu xét nghiệm '{name}' thành công!").format(name=updated_template.name))
                     return redirect('labtests:lab_test_template_list')
             except Exception as e:
-                messages.error(request, f"Có lỗi xảy ra khi cập nhật mẫu xét nghiệm: {e}")
-                print(f"Lỗi Exception khi cập nhật mẫu xét nghiệm: {e}")
+                messages.error(request, _("Có lỗi xảy ra khi cập nhật mẫu xét nghiệm: {error}").format(error=e))
         else:
-            messages.error(request, "Vui lòng sửa các lỗi trong form chính và/hoặc các chỉ số của mẫu xét nghiệm.")
-            print("Lỗi Form Cập Nhật Mẫu Xét Nghiệm (POST UPDATE):", form.errors.as_json(escape_html=True))
-            print("Lỗi Formset Cập Nhật Chỉ Số (POST UPDATE):", formset.errors)
-            print("Lỗi Formset Non-form Cập Nhật (Chỉ Số) (POST UPDATE):", formset.non_form_errors())
+            messages.error(request, _("Vui lòng sửa các lỗi trong form chính và/hoặc các chỉ số của mẫu xét nghiệm."))
     else: # GET request
         form = LabTestTemplateForm(instance=template_instance)
         formset = LabTestTemplateFieldFormSet(instance=template_instance, prefix='fields')
     context = {
         'form': form, 'formset': formset,
-        'page_title': f'Cập nhật Mẫu Xét nghiệm: {template_instance.name}',
-        'form_title': 'Cập nhật Thông tin Mẫu Xét nghiệm',
-        'submit_button_text': 'Lưu Thay đổi',
+        'page_title': _("Cập nhật Mẫu Xét nghiệm: {name}").format(name=template_instance.name),
+        'form_title': _('Cập nhật Thông tin Mẫu Xét nghiệm'),
+        'submit_button_text': _('Lưu Thay đổi'),
         'template_instance': template_instance
     }
     return render(request, 'labtests/lab_test_template_form.html', context)
@@ -119,26 +117,27 @@ def lab_test_template_delete(request, pk):
     if request.method == 'POST':
         try:
             if template_instance.lab_tests.exists():
-                messages.error(request, f"Không thể xóa mẫu xét nghiệm '{template_name}' vì nó đang được sử dụng.")
+                messages.error(request, _("Không thể xóa mẫu xét nghiệm '{name}' vì nó đang được sử dụng trong các phiếu xét nghiệm.").format(name=template_name))
                 return redirect('labtests:lab_test_template_list')
             template_instance.delete()
-            messages.success(request, f"Đã xóa mẫu xét nghiệm '{template_name}' thành công!")
+            messages.success(request, _("Đã xóa mẫu xét nghiệm '{name}' thành công!").format(name=template_name))
             return redirect('labtests:lab_test_template_list')
         except Exception as e:
-             messages.error(request, f"Có lỗi xảy ra khi xóa mẫu xét nghiệm: {e}")
+             messages.error(request, _("Có lỗi xảy ra khi xóa mẫu xét nghiệm: {error}").format(error=e))
              return redirect('labtests:lab_test_template_list')
     context = {
         'template_instance': template_instance,
-        'page_title': f'Xác nhận Xóa Mẫu Xét nghiệm: {template_name}',
-        'confirm_message': f"Bạn có chắc chắn muốn xóa mẫu xét nghiệm '{template_name}' không?"
+        'page_title': _("Xác nhận Xóa Mẫu Xét nghiệm: {name}").format(name=template_name),
+        'confirm_message': _("Bạn có chắc chắn muốn xóa mẫu xét nghiệm '{name}' không? Hành động này không thể hoàn tác nếu mẫu không được sử dụng.").format(name=template_name)
     }
     return render(request, 'labtests/lab_test_template_confirm_delete.html', context)
+
 
 # --- Views cho LabTest và LabTestResultValue ---
 @login_required
 def ajax_get_template_fields(request, template_id):
     try:
-        template = LabTestTemplate.objects.get(pk=template_id)
+        template = get_object_or_404(LabTestTemplate, pk=template_id)
         fields_data = list(template.fields.all().order_by('field_order').values(
             'id', 'field_name', 'unit', 'reference_range_text', 'result_guidance'
         ))
@@ -150,134 +149,176 @@ def ajax_get_template_fields(request, template_id):
 
 @login_required
 def lab_test_create_and_enter_results(request):
-    # ... (Nội dung hàm này giữ nguyên như phiên bản trước - ID: labtest_views_py_save_display_final_fix_v6) ...
-    # (Đảm bảo đã sửa lỗi lưu và hiển thị kết quả như đã thảo luận)
     patient_id_from_url = request.GET.get('patient_id')
     selected_patient = None
     initial_lab_test_data = {}
     medical_record_queryset = MedicalRecord.objects.select_related('patient').order_by('-record_date', 'patient__full_name')
+    initial_medical_record_pk = None
 
     if patient_id_from_url:
         try:
-            selected_patient = Patient.objects.get(pk=patient_id_from_url)
+            selected_patient = get_object_or_404(Patient, pk=patient_id_from_url)
             medical_record_queryset = MedicalRecord.objects.filter(patient=selected_patient).select_related('patient').order_by('-record_date')
             latest_medical_record = medical_record_queryset.first()
             if latest_medical_record:
                 initial_lab_test_data['medical_record'] = latest_medical_record.pk
+                initial_medical_record_pk = latest_medical_record.pk
+            else:
+                messages.info(request, _("Bệnh nhân '{name}' chưa có Hồ sơ bệnh án nào. Bạn có thể tạo phiếu xét nghiệm và chọn HSBA sau, hoặc tạo HSBA trước.").format(name=selected_patient.full_name))
         except Patient.DoesNotExist:
-            messages.error(request, "Không tìm thấy bệnh nhân được chọn.")
-            # return redirect('patients:patient_list') # Hoặc một trang lỗi khác
+            messages.error(request, _("Không tìm thấy bệnh nhân được chọn từ URL."))
 
     if request.method == 'POST':
+        if patient_id_from_url and not selected_patient:
+             try:
+                selected_patient = get_object_or_404(Patient, pk=patient_id_from_url)
+             except Patient.DoesNotExist:
+                messages.error(request, _("Tham số bệnh nhân không hợp lệ trong quá trình xử lý."))
+
         lab_test_form = LabTestForm(request.POST, prefix='labtest')
-        if selected_patient: # Lọc lại queryset nếu có patient_id từ URL, cho cả POST
+        if selected_patient:
              lab_test_form.fields['medical_record'].queryset = medical_record_queryset
 
-        result_formset = LabTestResultValueFormSet(request.POST, prefix='results') 
+        result_formset = LabTestResultValueFormSet(request.POST, prefix='results')
 
         if lab_test_form.is_valid():
             lab_test = lab_test_form.save(commit=False)
             if request.user.is_authenticated:
                 lab_test.requested_by = request.user
-            selected_template = lab_test_form.cleaned_data.get('template')
-            if not selected_template:
-                messages.error(request, "Vui lòng chọn một mẫu xét nghiệm.")
-                context = {'lab_test_form': lab_test_form, 'result_formset': result_formset, 'page_title': 'Nhập Kết quả Xét nghiệm Mới', 'form_title': 'Thông tin Phiếu Xét nghiệm và Kết quả', 'submit_button_text': 'Lưu Kết quả', 'selected_patient': selected_patient}
-                return render(request, 'labtests/lab_test_form_and_results.html', context)
-            lab_test.save() 
+            lab_test.print_status = LabTest.PrintStatus.PENDING
 
-            result_formset.instance = lab_test 
+            if selected_patient and lab_test.medical_record.patient != selected_patient:
+                messages.error(request, _("Hồ sơ bệnh án đã chọn không thuộc về bệnh nhân '{name}'. Vui lòng chọn lại.").format(name=selected_patient.full_name))
+                context = {
+                    'lab_test_form': lab_test_form, 'result_formset': result_formset,
+                    'page_title': _("Tạo Phiếu XN cho {name}").format(name=selected_patient.full_name) if selected_patient else _('Nhập Kết quả Xét nghiệm Mới'),
+                    'form_title': _('Thông tin Phiếu Xét nghiệm và Kết quả'),
+                    'submit_button_text': _('Lưu Kết quả'),
+                    'selected_patient': selected_patient,
+                    'initial_medical_record_pk': initial_medical_record_pk
+                }
+                return render(request, 'labtests/lab_test_form_and_results.html', context)
+
+            selected_template_from_form = lab_test_form.cleaned_data.get('template')
+            lab_test.save()
+
+            result_formset.instance = lab_test
             if result_formset.is_valid():
                 try:
                     with transaction.atomic():
                         instances = result_formset.save(commit=False)
                         saved_count = 0
                         for instance in instances:
-                            if instance.template_field_id: 
+                            if instance.template_field_id:
                                 if request.user.is_authenticated:
                                     instance.entered_by = request.user
                                 if instance.value or instance.comment or instance.pk:
                                     instance.save()
                                     saved_count += 1
-                        result_formset.save_m2m()
                         
-                        if saved_count > 0 or not selected_template.fields.exists():
+                        if saved_count > 0 or (selected_template_from_form and not selected_template_from_form.fields.exists()):
                             lab_test.results_updated_at = timezone.now()
-                            snapshot_details = "; ".join([f"{rv.template_field.field_name}: {rv.value or ''}" for rv in lab_test.result_values.all().order_by('template_field__field_order')])
-                            first_version = LabTestVersion.objects.create(
-                                lab_test=lab_test, version_number=1,
-                                result_snapshot=snapshot_details,
-                                changed_by=request.user,
-                                change_reason="Phiếu xét nghiệm được tạo và nhập kết quả."
+                            snapshot_details_list = []
+                            for rv in lab_test.result_values.select_related('template_field').all().order_by('template_field__field_order'):
+                                snapshot_details_list.append(f"{rv.template_field.field_name}: {rv.value or ''}")
+                            result_snapshot = "; ".join(snapshot_details_list)
+                            last_version_number = lab_test.versions.aggregate(max_version=Max('version_number'))['max_version'] or 0
+                            new_version_number = last_version_number + 1
+                            current_version = LabTestVersion.objects.create(
+                                lab_test=lab_test, version_number=new_version_number,
+                                result_snapshot=result_snapshot, changed_by=request.user,
+                                change_reason=_("Phiếu xét nghiệm được tạo và nhập kết quả lần đầu.")
                             )
-                            lab_test.latest_version = first_version
+                            lab_test.latest_version = current_version
+
+                            action = request.POST.get('action')
+                            if action == 'save_and_print':
+                                if lab_test.result_values.exists() or (selected_template_from_form and not selected_template_from_form.fields.exists()):
+                                    lab_test.print_status = LabTest.PrintStatus.PRINTED
+                                    lab_test.last_print_date = timezone.now()
+                                else:
+                                    messages.warning(request, _("Không thể 'Lưu và In' vì chưa có kết quả nào được nhập cho các chỉ số yêu cầu. Phiếu đã được lưu."))
+                            
                             lab_test.save()
-                            messages.success(request, f"Đã lưu {saved_count} kết quả xét nghiệm cho HSBA ID {lab_test.medical_record.id} thành công!")
+                            messages.success(request, _("Đã lưu {count} kết quả xét nghiệm cho HSBA ID {hsba_id} thành công!").format(count=saved_count, hsba_id=lab_test.medical_record.id))
+                            if action == 'save_and_print' and lab_test.print_status == LabTest.PrintStatus.PRINTED:
+                                return redirect('labtests:generate_lab_test_pdf', lab_test_id=lab_test.pk)
                             return redirect('labtests:lab_test_list')
                         else:
-                             messages.warning(request, "Không có kết quả nào được nhập hoặc có lỗi khi xử lý các chỉ số.")
+                             messages.warning(request, _("Không có kết quả nào được nhập hoặc có lỗi khi xử lý các chỉ số. Phiếu xét nghiệm đã được tạo nhưng chưa có kết quả chi tiết."))
+                             return redirect(reverse('labtests:lab_test_update_results', kwargs={'pk': lab_test.pk}))
                 except Exception as e:
-                    messages.error(request, f"Lỗi khi lưu kết quả chi tiết: {e}")
-                    print(f"Lỗi Exception khi lưu LabTest/Results (CREATE): {e}")
-            else: 
-                messages.error(request, "Dữ liệu kết quả chi tiết không hợp lệ. Vui lòng kiểm tra lại.")
-                print("LabTest Form (valid):", lab_test_form.cleaned_data)
-                print("Result Formset errors (POST CREATE):", result_formset.errors)
-                for i, form_in_set in enumerate(result_formset.forms):
-                    if form_in_set.errors: print(f"  Form {i} errors: {form_in_set.errors.as_json(escape_html=True)}")
-                print("Result Formset non-form errors (POST CREATE):", result_formset.non_form_errors())
-        else: 
-            messages.error(request, "Vui lòng sửa các lỗi trong thông tin phiếu xét nghiệm.")
-            print("LabTest Form errors (POST CREATE):", lab_test_form.errors.as_json(escape_html=True))
-            if result_formset.is_bound:
-                 print("Result Formset (bound but lab_test_form invalid) errors:", result_formset.errors)
-                 print("Result Formset (bound but lab_test_form invalid) non-form errors:", result_formset.non_form_errors())
+                    messages.error(request, _("Lỗi khi lưu kết quả chi tiết: {error}").format(error=e))
+            else:
+                error_messages_list = []
+                for form_in_set in result_formset:
+                    if form_in_set.errors:
+                        for field, errors_content in form_in_set.errors.items():
+                            field_label = form_in_set.fields[field].label if field in form_in_set.fields and form_in_set.fields[field].label else field
+                            error_messages_list.append(_("Lỗi ở chỉ số '{label}': {errors}").format(label=field_label, errors=', '.join(errors_content)))
+                if result_formset.non_form_errors():
+                    error_messages_list.append(_("Lỗi chung của bộ kết quả: {errors}").format(errors=', '.join(result_formset.non_form_errors())))
+                if not error_messages_list:
+                     messages.error(request, _("Dữ liệu kết quả chi tiết không hợp lệ. Vui lòng kiểm tra lại."))
+                else:
+                     messages.error(request, " ".join(error_messages_list))
+        else:
+            messages.error(request, _("Vui lòng sửa các lỗi trong thông tin phiếu xét nghiệm."))
     else: # GET request
         lab_test_form = LabTestForm(prefix='labtest', initial=initial_lab_test_data)
-        if selected_patient:
-            lab_test_form.fields['medical_record'].queryset = medical_record_queryset
-        
+        lab_test_form.fields['medical_record'].queryset = medical_record_queryset
         result_formset = LabTestResultValueFormSet(queryset=LabTestResultValue.objects.none(), prefix='results')
-    
+
     context = {
         'lab_test_form': lab_test_form,
         'result_formset': result_formset,
-        'page_title': 'Nhập Kết quả Xét nghiệm Mới',
-        'form_title': 'Thông tin Phiếu Xét nghiệm và Kết quả',
-        'submit_button_text': 'Lưu Kết quả',
-        'selected_patient': selected_patient
+        'page_title': _("Tạo Phiếu XN cho {name}").format(name=selected_patient.full_name) if selected_patient else _('Nhập Kết quả Xét nghiệm Mới'),
+        'form_title': _('Thông tin Phiếu Xét nghiệm và Kết quả'),
+        'submit_button_text': _('Lưu Kết quả'),
+        'selected_patient': selected_patient,
+        'initial_medical_record_pk': initial_medical_record_pk,
     }
     return render(request, 'labtests/lab_test_form_and_results.html', context)
 
-@login_required 
-def lab_test_list(request): # Đảm bảo hàm này được định nghĩa đúng
+@login_required
+def lab_test_list(request):
     query = request.GET.get('q', '')
     lab_tests_queryset = LabTest.objects.select_related(
         'medical_record__patient', 'template', 'requested_by', 'latest_version'
     ).all()
+    template_id_filter = request.GET.get('template_id')
+    if template_id_filter:
+        lab_tests_queryset = lab_tests_queryset.filter(template_id=template_id_filter)
+
     if query:
         lab_tests_queryset = lab_tests_queryset.filter(
             Q(medical_record__patient__full_name__icontains=query) |
             Q(template__name__icontains=query) |
-            Q(medical_record__id__icontains=query) | 
-            Q(id__icontains=query) 
+            Q(medical_record__id__icontains=query) |
+            Q(id__icontains=query)
         ).distinct()
     lab_tests = lab_tests_queryset.order_by('-requested_at')
     context = {
-        'lab_tests': lab_tests, 'page_title': 'Danh sách Phiếu Xét nghiệm',
-        'search_query': query, 'test_count': lab_tests.count()
+        'lab_tests': lab_tests,
+        'page_title': _('Danh sách Phiếu Xét nghiệm'),
+        'search_query': query,
+        'test_count': lab_tests.count(),
+        'selected_template_id': template_id_filter
     }
     return render(request, 'labtests/lab_test_list.html', context)
 
 @login_required
 def lab_test_update_results(request, pk):
-    # ... (Nội dung hàm này giữ nguyên như phiên bản trước - ID: labtest_views_py_save_display_final_fix_v6) ...
-    lab_test_instance = get_object_or_404(LabTest.objects.select_related('medical_record__patient', 'template'), pk=pk)
-    
+    lab_test_instance = get_object_or_404(LabTest.objects.select_related('medical_record__patient', 'template', 'latest_version'), pk=pk)
+    selected_patient_for_edit = lab_test_instance.medical_record.patient if lab_test_instance.medical_record else None
+
     if request.method == 'POST':
         lab_test_form = LabTestForm(request.POST, instance=lab_test_instance, prefix='labtest')
-        result_formset = LabTestResultValueFormSet(request.POST, instance=lab_test_instance, prefix='results')
+        if selected_patient_for_edit:
+            lab_test_form.fields['medical_record'].queryset = MedicalRecord.objects.filter(patient=selected_patient_for_edit)
         
+        result_formset = LabTestResultValueFormSet(request.POST, instance=lab_test_instance, prefix='results')
+
         if lab_test_form.is_valid() and result_formset.is_valid():
             try:
                 with transaction.atomic():
@@ -292,88 +333,99 @@ def lab_test_update_results(request, pk):
                     for form_to_delete in result_formset.deleted_forms:
                         if form_to_delete.instance.pk:
                             form_to_delete.instance.delete()
+                            significant_change_in_results = True
                     
-                    instances = result_formset.save(commit=False)
-                    for instance in instances:
-                        if instance.template_field_id: 
-                            if request.user.is_authenticated:
-                                instance.entered_by = request.user
-                            instance.save()
-                        else:
-                            print(f"    UPDATE: Skipped saving an instance in formset due to missing template_field_id. Data: {instance.__dict__}")
-                    result_formset.save_m2m()
+                    saved_forms_count = 0
+                    for form_in_set in result_formset.forms:
+                        if form_in_set.has_changed() or (form_in_set.instance.pk is None and form_in_set.cleaned_data.get('value')):
+                            if form_in_set.is_valid() and form_in_set.cleaned_data.get('template_field'):
+                                result_value_instance = form_in_set.save(commit=False)
+                                if request.user.is_authenticated:
+                                    result_value_instance.entered_by = request.user
+                                result_value_instance.save()
+                                saved_forms_count +=1
                     
+                    if saved_forms_count > 0:
+                        significant_change_in_results = True
+
                     if significant_change_in_results:
                         last_version_number = updated_lab_test.versions.aggregate(max_version=Max('version_number'))['max_version'] or 0
                         new_version_number = last_version_number + 1
-                        current_results_snapshot = "; ".join([f"{rv.template_field.field_name}: {rv.value or ''}" for rv in updated_lab_test.result_values.all().order_by('template_field__field_order')])
-                        LabTestVersion.objects.create(
+                        current_results_snapshot_list = []
+                        for rv in updated_lab_test.result_values.select_related('template_field').all().order_by('template_field__field_order'):
+                             current_results_snapshot_list.append(f"{rv.template_field.field_name}: {rv.value or ''}")
+                        current_results_snapshot = "; ".join(current_results_snapshot_list)
+                        
+                        new_version = LabTestVersion.objects.create(
                             lab_test=updated_lab_test, version_number=new_version_number,
-                            result_snapshot=current_results_snapshot, 
+                            result_snapshot=current_results_snapshot,
                             changed_by=request.user,
-                            change_reason="Kết quả xét nghiệm được cập nhật."
+                            change_reason=_("Kết quả xét nghiệm được cập nhật.")
                         )
-                        updated_lab_test.latest_version = updated_lab_test.versions.order_by('-version_number').first()
+                        updated_lab_test.latest_version = new_version
                         updated_lab_test.save(update_fields=['latest_version', 'results_updated_at'])
+
+                    messages.success(request, _("Đã cập nhật kết quả xét nghiệm cho HSBA ID {hsba_id} thành công!").format(hsba_id=updated_lab_test.medical_record.id))
                     
-                    messages.success(request, f"Đã cập nhật kết quả xét nghiệm cho HSBA ID {updated_lab_test.medical_record.id} thành công!")
+                    action = request.POST.get('action')
+                    if action == 'save_and_print':
+                        if updated_lab_test.result_values.exists() or (updated_lab_test.template and not updated_lab_test.template.fields.exists()):
+                            updated_lab_test.print_status = LabTest.PrintStatus.PRINTED
+                            updated_lab_test.last_print_date = timezone.now()
+                            updated_lab_test.save(update_fields=['print_status', 'last_print_date'])
+                            return redirect('labtests:generate_lab_test_pdf', lab_test_id=updated_lab_test.pk)
+                        else:
+                            messages.warning(request, _("Không thể 'In' vì chưa có kết quả nào được nhập. Thay đổi đã được lưu."))
                     return redirect('labtests:lab_test_list')
             except Exception as e:
-                messages.error(request, f"Lỗi khi cập nhật kết quả: {str(e)}")
-                print(f"Lỗi Exception khi cập nhật LabTest/Results: {e}")
-        else: 
-            messages.error(request, "Vui lòng sửa các lỗi trong form và/hoặc kết quả.")
-            print("LabTest Form errors (update):", lab_test_form.errors.as_json(escape_html=True))
-            print("Result Formset errors (update):", result_formset.errors)
-            for i, form_in_set in enumerate(result_formset.forms):
-                if form_in_set.errors: print(f"  Form {i} errors (update): {form_in_set.errors.as_json(escape_html=True)}")
-            print("Result Formset non-form errors (update):", result_formset.non_form_errors())
+                messages.error(request, _("Lỗi khi cập nhật kết quả: {error}").format(error=str(e)))
+        else:
+            messages.error(request, _("Vui lòng sửa các lỗi trong form và/hoặc kết quả."))
     else: # GET request
         lab_test_form = LabTestForm(instance=lab_test_instance, prefix='labtest')
+        if selected_patient_for_edit:
+            lab_test_form.fields['medical_record'].queryset = MedicalRecord.objects.filter(patient=selected_patient_for_edit)
         result_formset = LabTestResultValueFormSet(instance=lab_test_instance, prefix='results')
-        
-        selected_patient_for_edit = lab_test_instance.medical_record.patient if lab_test_instance.medical_record else None
 
     context = {
         'lab_test_form': lab_test_form, 'result_formset': result_formset,
-        'lab_test_instance': lab_test_instance, 
+        'lab_test_instance': lab_test_instance,
         'selected_patient': selected_patient_for_edit,
-        'page_title': f'Sửa/Xem Kết quả Xét nghiệm: {lab_test_instance.template.name}',
-        'form_title': f'Kết quả cho {lab_test_instance.medical_record.patient.full_name} (HSBA: {lab_test_instance.medical_record.id})',
-        'submit_button_text': 'Lưu Thay đổi Kết quả'
+        'page_title': _("Sửa/Xem Kết quả Xét nghiệm: {template_name}").format(template_name=lab_test_instance.template.name),
+        'form_title': _("Kết quả cho {patient_name} (HSBA: {hsba_id})").format(patient_name=lab_test_instance.medical_record.patient.full_name, hsba_id=lab_test_instance.medical_record.id),
+        'submit_button_text': _('Lưu Thay đổi Kết quả')
     }
     return render(request, 'labtests/lab_test_form_and_results.html', context)
 
 @login_required
 def lab_test_delete(request, pk):
     lab_test_instance = get_object_or_404(LabTest, pk=pk)
-    lab_test_display = f"phiếu xét nghiệm #{lab_test_instance.pk} ({lab_test_instance.template.name}) cho bệnh nhân {lab_test_instance.medical_record.patient.full_name}"
+    lab_test_display_info = _("phiếu xét nghiệm #{pk} ({template_name}) cho bệnh nhân {patient_name}").format(
+        pk=lab_test_instance.pk,
+        template_name=lab_test_instance.template.name,
+        patient_name=lab_test_instance.medical_record.patient.full_name
+    )
     if request.method == 'POST':
         try:
-            lab_test_instance.delete() 
-            messages.success(request, f"Đã xóa {lab_test_display} thành công!")
+            lab_test_instance.delete()
+            messages.success(request, _("Đã xóa {info} thành công!").format(info=lab_test_display_info))
             return redirect('labtests:lab_test_list')
         except Exception as e:
-            messages.error(request, f"Có lỗi xảy ra khi xóa phiếu xét nghiệm: {e}")
+            messages.error(request, _("Có lỗi xảy ra khi xóa phiếu xét nghiệm: {error}").format(error=e))
             return redirect('labtests:lab_test_list')
     context = {
         'lab_test_instance': lab_test_instance,
-        'page_title': 'Xác nhận Xóa Phiếu Xét nghiệm',
-        'confirm_message': f"Bạn có chắc chắn muốn xóa {lab_test_display} không?"
+        'page_title': _('Xác nhận Xóa Phiếu Xét nghiệm'),
+        'confirm_message': _("Bạn có chắc chắn muốn xóa {info} không? Hành động này không thể hoàn tác.").format(info=lab_test_display_info)
     }
     return render(request, 'labtests/lab_test_confirm_delete.html', context)
 
-# ---- VIEW ĐỂ XUẤT PDF (Sửa layout và bảng kết quả) ----
 @login_required
 def generate_lab_test_pdf(request, lab_test_id):
-    # ... (Nội dung hàm này giữ nguyên như phiên bản trước - ID: labtest_views_py_pdf_font_logo_final_v3) ...
     lab_test = get_object_or_404(LabTest.objects.select_related(
-        'medical_record__patient', 
-        'template', 
-        'requested_by',
+        'medical_record__patient', 'template', 'requested_by', 'latest_version'
     ), pk=lab_test_id)
-    
-    results = LabTestResultValue.objects.filter(lab_test=lab_test).select_related('template_field__template').order_by('template_field__field_order')
+    results = LabTestResultValue.objects.filter(lab_test=lab_test).select_related('template_field').order_by('template_field__field_order')
 
     buffer = io.BytesIO()
     p_canvas = canvas.Canvas(buffer, pagesize=A4)
@@ -381,108 +433,116 @@ def generate_lab_test_pdf(request, lab_test_id):
 
     font_name = "Helvetica"; font_name_bold = "Helvetica-Bold"
     font_dir = os.path.join(settings.BASE_DIR, 'static', 'fonts')
-    dejavu_sans_path = os.path.join(font_dir, 'DejaVuSans.ttf') 
+    dejavu_sans_path = os.path.join(font_dir, 'DejaVuSans.ttf')
     dejavu_sans_bold_path = os.path.join(font_dir, 'DejaVuSans-Bold.ttf')
     try:
         if os.path.exists(dejavu_sans_path) and os.path.exists(dejavu_sans_bold_path):
             pdfmetrics.registerFont(TTFont('VietFont', dejavu_sans_path))
             pdfmetrics.registerFont(TTFont('VietFont-Bold', dejavu_sans_bold_path))
             font_name = 'VietFont'; font_name_bold = 'VietFont-Bold'
-    except Exception: pass 
+    except Exception:
+        pass
 
     styles = getSampleStyleSheet()
     style_normal = ParagraphStyle('Normal_Vi', parent=styles['Normal'], fontName=font_name, fontSize=9, leading=11)
     style_bold_small = ParagraphStyle('Bold_Small_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=9, leading=11)
     style_bold_large_centered = ParagraphStyle('Bold_Large_Centered_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=16, leading=18, alignment=1)
     style_header_info = ParagraphStyle('Header_Info_Vi', parent=styles['Normal'], fontName=font_name, fontSize=8, leading=10)
-    style_clinic_main_title = ParagraphStyle('Clinic_Name_Main_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=11, leading=13) 
-    style_clinic_sub_title = ParagraphStyle('Clinic_Sub_Title_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=9, leading=11) 
+    style_clinic_main_title = ParagraphStyle('Clinic_Name_Main_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=11, leading=13)
+    style_clinic_sub_title = ParagraphStyle('Clinic_Sub_Title_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=9, leading=11)
     style_patient_info = ParagraphStyle('Patient_Info_Vi', parent=styles['Normal'], fontName=font_name, fontSize=10, leading=12)
-    style_footer_note = ParagraphStyle('Footer_Note_Vi', parent=styles['Normal'], fontName=font_name, fontSize=7, leading=9) 
+    style_footer_note = ParagraphStyle('Footer_Note_Vi', parent=styles['Normal'], fontName=font_name, fontSize=7, leading=9)
     style_slogan = ParagraphStyle('Slogan_Vi', parent=styles['Normal'], fontName=font_name_bold, fontSize=9, leading=11, alignment=1)
 
-    logo_filename = 'medionco_logo.png' 
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', logo_filename)
-    logo_x = 10*mm; logo_y_top = page_height - 10*mm; logo_max_height = 25*mm 
-    text_x_offset_after_logo = logo_x 
+    logo_filename = 'medionco_logo.png'
+    logo_path_parts = [str(settings.BASE_DIR), 'static', 'images', logo_filename]
+    if hasattr(settings, 'STATICFILES_DIRS') and settings.STATICFILES_DIRS:
+        logo_path_parts = [str(settings.STATICFILES_DIRS[0]), 'images', logo_filename]
+    elif hasattr(settings, 'STATIC_ROOT') and settings.STATIC_ROOT:
+        logo_path_parts = [str(settings.STATIC_ROOT), 'images', logo_filename]
+    logo_path = os.path.join(*logo_path_parts)
+    
+    logo_x = 10*mm; logo_y_top = page_height - 10*mm; logo_max_height = 25*mm
+    text_x_offset_after_logo = logo_x
     if os.path.exists(logo_path):
         try:
             img_reader = ImageReader(logo_path)
-            orig_width, orig_height = img_reader.getSize(); aspect_ratio = orig_width / float(orig_height)
+            orig_width, orig_height = img_reader.getSize()
+            aspect_ratio = orig_width / float(orig_height) if orig_height else 1
             logo_height_calc = logo_max_height; logo_width_calc = logo_height_calc * aspect_ratio
             p_canvas.drawImage(logo_path, logo_x, logo_y_top - logo_height_calc, width=logo_width_calc, height=logo_height_calc, preserveAspectRatio=True, mask='auto', anchor='nw')
-            text_x_offset_after_logo = logo_x + logo_width_calc + 3*mm 
-        except Exception as e: print(f"Error drawing logo image '{logo_path}': {e}")
-    else: print(f"WARNING: Logo file not found at {logo_path}.")
-
-    y_text_offset_clinic = logo_y_top - 5*mm 
-    p_clinic_name = Paragraph("Y KHOA UNG BƯỚU CẦN THƠ", style_clinic_main_title)
+            text_x_offset_after_logo = logo_x + logo_width_calc + 3*mm
+        except Exception:
+            pass
+    
+    y_text_offset_clinic = logo_y_top - 5*mm
+    p_clinic_name = Paragraph(_("Y KHOA UNG BƯỚU CẦN THƠ"), style_clinic_main_title)
     p_clinic_name.wrapOn(p_canvas, page_width - text_x_offset_after_logo - 20*mm, 10*mm); p_clinic_name.drawOn(p_canvas, text_x_offset_after_logo, y_text_offset_clinic)
     y_text_offset_clinic -= 5*mm
-    p_clinic_subname = Paragraph("PHÒNG XÉT NGHIỆM MEDIONCO", style_clinic_sub_title)
+    p_clinic_subname = Paragraph(_("PHÒNG XÉT NGHIỆM MEDIONCO"), style_clinic_sub_title)
     p_clinic_subname.wrapOn(p_canvas, page_width - text_x_offset_after_logo - 20*mm, 10*mm); p_clinic_subname.drawOn(p_canvas, text_x_offset_after_logo, y_text_offset_clinic)
     
-    header_info_y_start = page_height - 38*mm 
+    header_info_y_start = page_height - 38*mm
     line_height_contact = 4*mm; left_col_x_contact = 20*mm; right_col_x_contact = 130*mm
-    p_addr = Paragraph("Địa chỉ: Số 10, ĐS 5, Tổ 17, KV Bình Thường B, P. Long Tuyền, Q. Bình Thủy, TPCT.", style_header_info)
+    p_addr = Paragraph(_("Địa chỉ: Số 10, ĐS 5, Tổ 17, KV Bình Thường B, P. Long Tuyền, Q. Bình Thủy, TPCT."), style_header_info)
     p_addr.wrapOn(p_canvas, 105*mm, 10*mm); p_addr.drawOn(p_canvas, left_col_x_contact, header_info_y_start)
-    stt_text = f"STT: {timezone.localtime(lab_test.requested_at).strftime('%y%m%d')}-{lab_test.pk}"
+    stt_text = _("STT: {date}-{pk}").format(date=timezone.localtime(lab_test.requested_at).strftime('%y%m%d'), pk=lab_test.pk)
     p_stt = Paragraph(stt_text, style_header_info); p_stt.wrapOn(p_canvas, 70*mm, 10*mm); p_stt.drawOn(p_canvas, right_col_x_contact, header_info_y_start)
     header_info_y_start -= line_height_contact
-    p_phone = Paragraph(f"Điện thoại: 0917.575656.", style_header_info)
+    p_phone = Paragraph(_("Điện thoại: 0917.575656."), style_header_info)
     p_phone.wrapOn(p_canvas, 105*mm, 10*mm); p_phone.drawOn(p_canvas, left_col_x_contact, header_info_y_start)
-    ngay_dk_text = f"Ngày đăng ký: {timezone.localtime(lab_test.requested_at).strftime('%d/%m/%Y - %H:%M')}"
+    ngay_dk_text = _("Ngày đăng ký: {datetime}").format(datetime=timezone.localtime(lab_test.requested_at).strftime('%d/%m/%Y - %H:%M'))
     p_ngay_dk = Paragraph(ngay_dk_text, style_header_info); p_ngay_dk.wrapOn(p_canvas, 70*mm, 10*mm); p_ngay_dk.drawOn(p_canvas, right_col_x_contact, header_info_y_start)
     header_info_y_start -= line_height_contact
-    p_web = Paragraph(f"Web: Ykhoaungbuoucantho.com.vn.", style_header_info)
+    p_web = Paragraph(_("Web: Ykhoaungbuoucantho.com.vn."), style_header_info)
     p_web.wrapOn(p_canvas, 105*mm, 10*mm); p_web.drawOn(p_canvas, left_col_x_contact, header_info_y_start)
-    gio_xuat_text = f"Giờ xuất file: {timezone.localtime(timezone.now()).strftime('%d/%m/%Y - %H:%M')}"
+    gio_xuat_text = _("Giờ xuất file: {datetime}").format(datetime=timezone.localtime(timezone.now()).strftime('%d/%m/%Y - %H:%M'))
     p_gio_xuat = Paragraph(gio_xuat_text, style_header_info); p_gio_xuat.wrapOn(p_canvas, 70*mm, 10*mm); p_gio_xuat.drawOn(p_canvas, right_col_x_contact, header_info_y_start)
     header_info_y_start -= line_height_contact
-    p_email = Paragraph(f"Email: CSKH.MEDIONCO@GMAIL.COM.", style_header_info)
+    p_email = Paragraph(_("Email: CSKH.MEDIONCO@GMAIL.COM."), style_header_info)
     p_email.wrapOn(p_canvas, 105*mm, 10*mm); p_email.drawOn(p_canvas, left_col_x_contact, header_info_y_start)
 
-    y_title_kq = header_info_y_start - 12*mm 
-    p_title = Paragraph("KẾT QUẢ XÉT NGHIỆM", style_bold_large_centered)
+    y_title_kq = header_info_y_start - 12*mm
+    p_title = Paragraph(_("KẾT QUẢ XÉT NGHIỆM"), style_bold_large_centered)
     title_w, title_h = p_title.wrapOn(p_canvas, page_width - 40*mm, 20*mm)
     p_title.drawOn(p_canvas, (page_width - title_w) / 2, y_title_kq - title_h)
 
-    y_position_patient = y_title_kq - title_h - 10*mm 
-    line_height_patient = 6*mm 
-    patient = lab_test.medical_record.patient
+    y_position_patient = y_title_kq - title_h - 10*mm
+    line_height_patient = 6*mm
+    patient_obj = lab_test.medical_record.patient
     p_canvas.setFont(font_name, 10)
-    p_canvas.drawString(20*mm, y_position_patient, f"Họ tên: {patient.full_name or ''}")
-    p_canvas.drawString(100*mm, y_position_patient, f"Ngày tháng năm sinh: {patient.date_of_birth.strftime('%d/%m/%Y') if patient.date_of_birth else ''}")
-    y_position_patient -= line_height_patient 
-    p_canvas.drawString(20*mm, y_position_patient, f"Giới Tính: {patient.get_gender_display() or ''}")
-    p_canvas.drawString(100*mm, y_position_patient, f"Điện thoại: {patient.phone or ''}") 
+    p_canvas.drawString(20*mm, y_position_patient, _("Họ tên: {name}").format(name=patient_obj.full_name or ''))
+    p_canvas.drawString(100*mm, y_position_patient, _("Ngày tháng năm sinh: {dob}").format(dob=patient_obj.date_of_birth.strftime('%d/%m/%Y') if patient_obj.date_of_birth else ''))
+    y_position_patient -= line_height_patient
+    p_canvas.drawString(20*mm, y_position_patient, _("Giới Tính: {gender}").format(gender=patient_obj.get_gender_display() or ''))
+    p_canvas.drawString(100*mm, y_position_patient, _("Điện thoại: {phone}").format(phone=patient_obj.phone or ''))
     y_position_patient -= line_height_patient
     
-    p_diachi_text = f"Địa chỉ: {patient.address or ''}"
+    p_diachi_text = _("Địa chỉ: {address}").format(address=patient_obj.address or '')
     p_diachi_para = Paragraph(p_diachi_text, style_patient_info)
-    w_diachi, h_diachi = p_diachi_para.wrapOn(p_canvas, page_width - 40*mm, 15*mm) 
-    p_diachi_para.drawOn(p_canvas, 20*mm, y_position_patient - h_diachi + style_patient_info.leading*0.2) 
-    y_position_patient -= (h_diachi + 2*mm) 
+    w_diachi, h_diachi = p_diachi_para.wrapOn(p_canvas, page_width - 40*mm, 15*mm)
+    p_diachi_para.drawOn(p_canvas, 20*mm, y_position_patient - h_diachi + style_patient_info.leading*0.2)
+    y_position_patient -= (h_diachi + 2*mm)
     
-    bs_chi_dinh_text = f"BS Chỉ định: {lab_test.requested_by.get_full_name() if lab_test.requested_by else 'N/A'}"
+    bs_chi_dinh_text = _("BS Chỉ định: {name}").format(name=lab_test.requested_by.get_full_name() if lab_test.requested_by else 'N/A')
     p_canvas.drawString(20*mm, y_position_patient, bs_chi_dinh_text)
-    bs_phone_text = f"Số điện Thoại BS: {lab_test.requested_by.phone if lab_test.requested_by and lab_test.requested_by.phone else 'N/A'}"
+    bs_phone_text = _("Số điện Thoại BS: {phone}").format(phone=lab_test.requested_by.phone if lab_test.requested_by and hasattr(lab_test.requested_by, 'phone') and lab_test.requested_by.phone else 'N/A')
     p_canvas.drawString(100*mm, y_position_patient, bs_phone_text)
     y_position_patient -= line_height_patient
 
-    p_chandoan_text = f"Chẩn đoán: {lab_test.medical_record.diagnosis or ''}"
+    p_chandoan_text = _("Chẩn đoán: {diagnosis}").format(diagnosis=lab_test.medical_record.diagnosis or '')
     p_chandoan_para = Paragraph(p_chandoan_text, style_patient_info)
     w_cd, h_cd = p_chandoan_para.wrapOn(p_canvas, 85*mm, 15*mm)
     p_chandoan_para.drawOn(p_canvas, 20*mm, y_position_patient - h_cd + style_patient_info.leading*0.2)
-    p_ghichu_hsba_text = f"Ghi chú: {lab_test.medical_record.notes or ''}"
-    p_ghichu_hsba = Paragraph(p_ghichu_hsba_text, style_patient_info)
-    available_w_ghichu = page_width - (110*mm) - 15*mm 
-    _w_ghichu, _h_ghichu = p_ghichu_hsba.wrapOn(p_canvas, available_w_ghichu, 15*mm) 
-    p_ghichu_hsba.drawOn(p_canvas, 110*mm, y_position_patient - _h_ghichu + style_patient_info.leading*0.2)
+    p_ghichu_hsba_text = _("Ghi chú HSBA: {notes}").format(notes=lab_test.medical_record.notes or '')
+    p_ghichu_hsba_para = Paragraph(p_ghichu_hsba_text, style_patient_info)
+    available_w_ghichu = page_width - (110*mm) - 15*mm
+    _w_ghichu, _h_ghichu = p_ghichu_hsba_para.wrapOn(p_canvas, available_w_ghichu, 15*mm)
+    p_ghichu_hsba_para.drawOn(p_canvas, 110*mm, y_position_patient - _h_ghichu + style_patient_info.leading*0.2)
     y_position_for_table = y_position_patient - max(h_cd, _h_ghichu) - 7*mm
 
     table_data = [
-        [Paragraph("XÉT NGHIỆM", style_bold_small), Paragraph("KẾT QUẢ", style_bold_small), Paragraph("KHOẢN THAM CHIẾU", style_bold_small), Paragraph("ĐƠN VỊ", style_bold_small)]
+        [Paragraph(_("XÉT NGHIỆM"), style_bold_small), Paragraph(_("KẾT QUẢ"), style_bold_small), Paragraph(_("KHOẢN THAM CHIẾU"), style_bold_small), Paragraph(_("ĐƠN VỊ"), style_bold_small)]
     ]
     if results.exists():
         for result in results:
@@ -493,78 +553,93 @@ def generate_lab_test_pdf(request, lab_test_id):
                 Paragraph(str(result.template_field.unit or ''), style_normal)
             ])
     else:
-        table_data.append([Paragraph("Chưa có kết quả chi tiết cho phiếu xét nghiệm này.", style_normal), "", "", ""])
+        table_data.append([Paragraph(_("Chưa có kết quả chi tiết cho phiếu xét nghiệm này."), style_normal), "", "", ""])
     
     num_data_rows = results.count() if results.exists() else 1
-    num_empty_rows_needed = 2 - num_data_rows 
-    for _ in range(max(0, num_empty_rows_needed)): 
-        table_data.append([Paragraph('', style_normal), Paragraph('', style_normal), Paragraph('', style_normal), Paragraph('', style_normal)])
+    min_table_rows = 3
+    num_empty_rows_needed_in_data = min_table_rows - 1 - num_data_rows
+    for _i in range(max(0, num_empty_rows_needed_in_data)):
+        table_data.append(['', '', '', ''])
 
-    table_width = page_width - 40*mm 
-    col_widths = [table_width*0.40, table_width*0.15, table_width*0.30, table_width*0.15] 
-    result_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table_width_pdf = page_width - 40*mm
+    col_widths_pdf = [table_width_pdf*0.38, table_width_pdf*0.20, table_width_pdf*0.27, table_width_pdf*0.15]
+    result_table = Table(table_data, colWidths=col_widths_pdf, repeatRows=1)
     result_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#D0D0D0")),
         ('TEXTCOLOR', (0,0), (-1,0), colors.black),
         ('ALIGN', (0,0), (-1,-1), 'LEFT'), ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('FONTNAME', (0,0), (-1,0), font_name_bold), ('FONTSIZE', (0,0), (-1,0), 9),
-        ('BOTTOMPADDING', (0,0), (-1,0), 5), ('TOPPADDING', (0,0), (-1,0), 5),
+        ('FONTNAME', (0,0), (-1,0), font_name_bold), ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3), ('TOPPADDING', (0,0), (-1,-1), 3),
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
         ('LEFTPADDING', (0,0), (-1,-1), 3), ('RIGHTPADDING', (0,0), (-1,-1), 3),
     ]))
     
-    frame_x = 20*mm; frame_y_bottom_margin = 60*mm 
-    frame_width = page_width - 40*mm; frame_height = y_position_for_table - frame_y_bottom_margin 
-    
+    frame_x_pdf = 20*mm; frame_y_bottom_margin_pdf = 60*mm
+    frame_width_pdf = page_width - 40*mm; frame_height_pdf = y_position_for_table - frame_y_bottom_margin_pdf
     try:
-        w_table, h_table = result_table.wrapOn(p_canvas, frame_width, frame_height)
-        if h_table <= frame_height :
-            result_table.drawOn(p_canvas, frame_x, y_position_for_table - h_table)
-        else: 
-            p_canvas.drawString(20*mm, y_position_for_table - 5*mm, "LƯU Ý: Kết quả quá dài, chức năng ngắt trang tự động cần hoàn thiện.")
-    except Exception as e_table:
-        print(f"Error drawing table: {e_table}")
-        p_canvas.drawString(20*mm, y_position_for_table - 5*mm, "Lỗi khi vẽ bảng kết quả.")
+        w_table, h_table = result_table.wrapOn(p_canvas, frame_width_pdf, frame_height_pdf)
+        if h_table <= frame_height_pdf :
+            result_table.drawOn(p_canvas, frame_x_pdf, y_position_for_table - h_table)
+        else:
+            p_canvas.drawString(20*mm, y_position_for_table - 5*mm, _("LƯU Ý: Kết quả quá dài, chức năng ngắt trang tự động cần hoàn thiện."))
+    except Exception:
+        p_canvas.drawString(20*mm, y_position_for_table - 5*mm, _("Lỗi khi vẽ bảng kết quả."))
 
-    
-    # --- Footer (Sửa khoảng cách ký tên) ---
-    footer_y_start_text = 45*mm 
+    # --- Footer ---
+    y_kiem_duyet_bottom = 45*mm 
+    p_kiem_duyet = Paragraph(_("Kết quả đã được kiểm duyệt /QA"), style_normal)
+    p_kiem_duyet_w, p_kiem_duyet_h = p_kiem_duyet.wrapOn(p_canvas, 80*mm, 20*mm) 
+    p_kiem_duyet.drawOn(p_canvas, 20*mm, y_kiem_duyet_bottom)
 
-    p_kiem_duyet = Paragraph("Kết quả đã được kiểm duyệt /QA", style_normal)
-    p_kiem_duyet.wrapOn(p_canvas, 80*mm, 10*mm); p_kiem_duyet.drawOn(p_canvas, 20*mm, footer_y_start_text)
-    
-    ngay_thang_nam_tp = f"TP. Cần Thơ, ngày {timezone.localtime(timezone.now()).day} tháng {timezone.localtime(timezone.now()).month} năm {timezone.localtime(timezone.now()).year}"
-    p_ngay_tp = Paragraph(ngay_thang_nam_tp, style_normal)
-    text_width_ngaytp = p_canvas.stringWidth(ngay_thang_nam_tp, font_name, 9)
-    p_ngay_tp.wrapOn(p_canvas, text_width_ngaytp + 5*mm, 10*mm); p_ngay_tp.drawOn(p_canvas, page_width - 20*mm - text_width_ngaytp, footer_y_start_text)
-    
-    # Vị trí cho dòng "(Ký, đóng dấu và ghi rõ họ tên)" - Đẩy xuống thấp hơn
-    y_ky_ten_text = footer_y_start_text - 23*mm 
-    
-    p_ky_ten = Paragraph("(Ký, đóng dấu và ghi rõ họ tên)", style_header_info)
-    ky_ten_width = p_canvas.stringWidth("(Ký, đóng dấu và ghi rõ họ tên)", font_name, 8)
-    p_ky_ten.wrapOn(p_canvas, ky_ten_width + 5*mm, 10*mm)
-    p_ky_ten.drawOn(p_canvas, page_width - 20*mm - ky_ten_width - (70*mm - ky_ten_width)/2, y_ky_ten_text)
+    signature_area_width_footer = 70*mm 
+    signature_area_x_start_footer = page_width - 20*mm - signature_area_width_footer
 
-    # Vị trí cho "PHÒNG XÉT NGHIỆM" (PHÍA TRÊN dòng ký tên)
-    y_phong_xet_nghiem_title = y_ky_ten_text + 5*mm # Đặt ngay phía trên dòng (Ký,...)
-    
-    p_pxn_title = Paragraph("PHÒNG XÉT NGHIỆM", style_bold_small)
-    pxn_title_width = p_canvas.stringWidth("PHÒNG XÉT NGHIỆM", font_name_bold, 9)
-    p_pxn_title.wrapOn(p_canvas, pxn_title_width + 5*mm, 10*mm)
-    p_pxn_title.drawOn(p_canvas, page_width - 20*mm - pxn_title_width - (70*mm - pxn_title_width)/2 , y_phong_xet_nghiem_title)
+    current_time_footer_val = timezone.localtime(timezone.now())
+    ngay_thang_nam_tp_footer_str_val = _("TP. Cần Thơ, ngày {day} tháng {month} năm {year}").format(day=current_time_footer_val.day, month=current_time_footer_val.month, year=current_time_footer_val.year)
+    p_ngay_tp = Paragraph(ngay_thang_nam_tp_footer_str_val, style_normal)
+    ngay_tp_w_val, ngay_tp_h_val = p_ngay_tp.wrapOn(p_canvas, signature_area_width_footer, 20*mm) 
+    y_ngay_tp_bottom_val = y_kiem_duyet_bottom 
+    x_ngay_tp_val = signature_area_x_start_footer + (signature_area_width_footer - ngay_tp_w_val) / 2
+    p_ngay_tp.drawOn(p_canvas, x_ngay_tp_val, y_ngay_tp_bottom_val)
 
+    p_pxn_title = Paragraph(_("PHÒNG XÉT NGHIỆM"), style_bold_small)
+    pxn_title_w_val, pxn_title_h_val = p_pxn_title.wrapOn(p_canvas, signature_area_width_footer, 20*mm)
+    line_spacing_1_val = 1*mm 
+    y_pxn_title_base_y = y_ngay_tp_bottom_val - ngay_tp_h_val - line_spacing_1_val 
+    x_pxn_title_centered = signature_area_x_start_footer + (signature_area_width_footer - pxn_title_w_val) / 2
+    x_pxn_title_val = x_pxn_title_centered + 7.5*mm # Lệch phải 0.5cm
+    p_pxn_title.drawOn(p_canvas, x_pxn_title_val, y_pxn_title_base_y - pxn_title_h_val)
 
-    p_ghichu_cuoi = Paragraph("*Ghi chú: Kết quả in đậm là ngoài khoảng tham chiếu, kết quả chỉ có giá trị trên mẫu thử. Tô đậm bên trái -Thấp. Tô đậm bên phải-Cao.", style_footer_note)
-    p_ghichu_cuoi.wrapOn(p_canvas, page_width - 40*mm, 15*mm); p_ghichu_cuoi.drawOn(p_canvas, 20*mm, 15*mm)
-    p_slogan = Paragraph("TẦM SOÁT SỚM - SỐNG KHỎE MẠNH", style_slogan)
-    p_slogan.wrapOn(p_canvas, page_width - 40*mm, 10*mm); p_slogan.drawOn(p_canvas, 20*mm, 7*mm)
+    p_ky_ten = Paragraph(_("(Ký, đóng dấu và ghi rõ họ tên)"), style_header_info)
+    ky_ten_w_val, ky_ten_h_val = p_ky_ten.wrapOn(p_canvas, signature_area_width_footer, 20*mm)
+    line_spacing_2_val = 1*mm
+    y_ky_ten_base_y = y_pxn_title_base_y - pxn_title_h_val - line_spacing_2_val
+    x_ky_ten_centered = signature_area_x_start_footer + (signature_area_width_footer - ky_ten_w_val) / 2
+    x_ky_ten_val = x_ky_ten_centered + 5*mm # Lệch phải 0.25cm
+    p_ky_ten.drawOn(p_canvas, x_ky_ten_val, y_ky_ten_base_y - ky_ten_h_val)
+
+    p_ghichu_cuoi = Paragraph(_("*Ghi chú: Kết quả in đậm là ngoài khoảng tham chiếu, kết quả chỉ có giá trị trên mẫu thử. Tô đậm bên trái -Thấp. Tô đậm bên phải-Cao."), style_footer_note)
+    _w_gc_val, h_gc_val = p_ghichu_cuoi.wrapOn(p_canvas, page_width - 40*mm, 20*mm)
+    p_ghichu_cuoi.drawOn(p_canvas, 20*mm, 15*mm)
+
+    p_slogan = Paragraph(_("TẦM SOÁT SỚM - SỐNG KHỎE MẠNH"), style_slogan)
+    _w_sl_val, h_sl_val = p_slogan.wrapOn(p_canvas, page_width - 40*mm, 10*mm)
+    p_slogan.drawOn(p_canvas, 20*mm, 15*mm - h_gc_val - 1*mm)
 
     p_canvas.save()
     pdf = buffer.getvalue()
     buffer.close()
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="ket_qua_xet_nghiem_{lab_test.pk}.pdf"'
+    
+    patient_name_for_file = "".join(filter(str.isalnum, patient_obj.full_name.replace(' ', '_'))) if patient_obj.full_name else "UnknownPatient"
+    safe_filename = f"KQXT_{patient_name_for_file}_{lab_test.pk}.pdf"
+    response['Content-Disposition'] = f'inline; filename="{safe_filename}"'
     response.write(pdf)
-    return response
 
+    if lab_test.print_status == LabTest.PrintStatus.PENDING and \
+       (results.exists() or (lab_test.template and not lab_test.template.fields.exists())):
+        lab_test.print_status = LabTest.PrintStatus.PRINTED
+        lab_test.last_print_date = timezone.now()
+        lab_test.save(update_fields=['print_status', 'last_print_date'])
+
+    return response

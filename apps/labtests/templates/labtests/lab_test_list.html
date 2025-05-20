@@ -85,9 +85,9 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ test.results_updated_at|date:"d/m/Y H:i"|default:"Chưa có KQ" }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <a href="{% url 'labtests:lab_test_update_results' test.pk %}" class="text-blue-600 hover:text-blue-800 px-2 py-1">Xem/Sửa KQ</a>
+                                                <a href="{% url 'labtests:lab_test_update_results' test.pk %}" class="text-blue-600 hover:text-blue-800 px-2 py-1">Sửa</a>
                                                 <a href="{% url 'labtests:generate_lab_test_pdf' test.pk %}" class="text-green-600 hover:text-green-800 px-2 py-1 ml-2" target="_blank">
-                                                    <i class="fas fa-file-pdf mr-1"></i>PDF
+                                                    <i class="fas fa-file-pdf mr-1"></i>IN 
                                                 </a>
                                                 <a href="{% url 'labtests:lab_test_delete' test.pk %}" class="text-red-600 hover:text-red-900 px-2 py-1 ml-2">Xóa</a>
                                             </td>
