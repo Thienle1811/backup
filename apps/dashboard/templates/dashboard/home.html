@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+  <!-- Welcome Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h4 mb-1">Xin chào, {{ request.user.get_full_name|default:request.user.username }}</h1>
+      <p class="text-muted small mb-0">Đây là tổng quan về hoạt động của phòng khám</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'medical_records:select_patient' %}" class="btn btn-primary">
+        <i class="bi bi-file-earmark-medical me-1"></i> Tạo bệnh án
+      </a>
+      <a href="{% url 'labtests:select_patient' %}" class="btn btn-success">
+        <i class="bi bi-plus-lg me-1"></i> Tạo phiếu xét nghiệm
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                <i class="bi bi-people" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="card-title mb-1">Tổng bệnh nhân</h6>
+              <h3 class="mb-0">{{ total_patients }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="avatar bg-success bg-opacity-10 text-success rounded-circle p-3">
+                <i class="bi bi-file-earmark-medical" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="card-title mb-1">Bệnh án hôm nay</h6>
+              <h3 class="mb-0">{{ today_records }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="avatar bg-info bg-opacity-10 text-info rounded-circle p-3">
+                <i class="bi bi-beaker" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="card-title mb-1">Xét nghiệm hôm nay</h6>
+              <h3 class="mb-0">{{ today_labtests }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="avatar bg-warning bg-opacity-10 text-warning rounded-circle p-3">
+                <i class="bi bi-clock-history" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="card-title mb-1">Đang chờ kết quả</h6>
+              <h3 class="mb-0">{{ pending_labtests }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Lab Tests -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-transparent py-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="card-title h6 mb-0">Phiếu xét nghiệm mới nhất</h5>
+        <a href="{% url 'labtests:list' %}" class="btn btn-link btn-sm p-0">
+          Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Loại xét nghiệm</th>
+              <th>Bệnh nhân</th>
+              <th>Nhân sự thực hiện</th>
+              <th>Thời gian cập nhật</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lt in lab_tests %}
+            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='{% url 'labtests:detail' lt.id %}'">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-info bg-opacity-10 text-info rounded-circle p-2 me-2">
+                    <i class="bi bi-beaker"></i>
+                  </div>
+                  {{ lt.category.name }}
+                </div>
+              </td>
+              <td>{{ lt.patient.full_name }}</td>
+              <td>{{ lt.created_by.get_full_name|default:lt.created_by.username }}</td>
+              <td>{{ lt.updated_at|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="bi bi-beaker d-block mb-2" style="font-size: 2rem;"></i>
+                  Chưa có phiếu xét nghiệm nào.
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Medical Records -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-transparent py-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="card-title h6 mb-0">Bệnh án mới nhất</h5>
+        <a href="{% url 'medical_records:list' %}" class="btn btn-link btn-sm p-0">
+          Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Bệnh nhân</th>
+              <th>Chẩn đoán</th>
+              <th>Ngày khám</th>
+              <th>Nhân sự thực hiện</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mr in medical_records %}
+            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='{% url 'medical_records:detail' mr.id %}'">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
+                    <i class="bi bi-person"></i>
+                  </div>
+                  {{ mr.patient.full_name }}
+                </div>
+              </td>
+              <td>{{ mr.diagnosis|truncatechars:50 }}</td>
+              <td>{{ mr.record_date|date:"d/m/Y" }}</td>
+              <td>{{ mr.created_by.get_full_name|default:mr.created_by.username }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="bi bi-file-earmark-medical d-block mb-2" style="font-size: 2rem;"></i>
+                  Chưa có bệnh án nào.
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_css %}
+<style>
+  .avatar {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .avatar-sm {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .clickable-row:hover {
+    background-color: rgba(0,0,0,.03);
+  }
+  @media (max-width: 768px) {
+    .card-title {
+      font-size: 0.875rem;
+    }
+    .table td, .table th {
+      white-space: nowrap;
+    }
+  }
+</style>
+{% endblock %}
+{% endblock %}

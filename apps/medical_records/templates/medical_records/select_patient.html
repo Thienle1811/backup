@@ -1,0 +1,87 @@
+<!-- 1️⃣ templates/medical_records/select_patient.html -->
+{% extends "base.html" %}
+{% block title %}Chọn bệnh nhân{% endblock %}
+
+{% block header %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Tạo bệnh án</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0">Tạo bệnh án mới</h1>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title h6 mb-3">Chọn bệnh nhân</h5>
+      <form method="get" class="row g-3">
+        <div class="col-12 col-md-8">
+          <div class="input-group">
+            <span class="input-group-text bg-light">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" 
+                   name="q" 
+                   value="{{ q }}" 
+                   class="form-control" 
+                   placeholder="Tìm theo tên hoặc số điện thoại bệnh nhân"
+                   autofocus>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-search me-1"></i> Tìm kiếm
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Họ và tên</th>
+              <th>Số điện thoại</th>
+              <th class="text-end">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in patients %}
+            <tr>
+              <td>{{ p.full_name }}</td>
+              <td>{{ p.phone }}</td>
+              <td class="text-end">
+                <a href="{% url 'medical_records:create' p.id %}" 
+                   class="btn btn-success btn-sm">
+                  <i class="bi bi-check-lg me-1"></i> Chọn
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="bi bi-search d-block mb-2" style="font-size: 2rem;"></i>
+                  Không tìm thấy bệnh nhân nào.
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% include "partials/pagination.html" with page_obj=page_obj %}
+</div>
+{% endblock %}

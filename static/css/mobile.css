@@ -1,0 +1,159 @@
+/* Mobile-first responsive styles */
+
+/* Base container padding */
+.container-fluid {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Button styles */
+.btn {
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Stack buttons vertically on mobile */
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  /* Make buttons full width in mobile */
+  .btn-group .btn {
+    width: 100%;
+  }
+
+  /* Improve button container spacing */
+  .d-flex.flex-column.flex-sm-row {
+    width: 100%;
+  }
+
+  .d-flex.flex-column.flex-sm-row .btn {
+    margin-right: 0;
+  }
+
+  /* Add spacing between stacked buttons */
+  .d-flex.flex-column .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.flex-column .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Table styles */
+.table-responsive {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .table td, .table th {
+    white-space: normal;
+    word-break: break-word;
+    padding: 0.5rem;
+  }
+  
+  /* Hide less important columns on mobile */
+  .table-responsive .d-none-mobile {
+    display: none !important;
+  }
+}
+
+/* Card styles */
+.card {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .card-title {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Form styles */
+@media (max-width: 768px) {
+  .form-control {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 0.5rem;
+  }
+  
+  .form-label {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* List group styles */
+@media (max-width: 768px) {
+  .list-group-item {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Spacing utilities */
+@media (max-width: 768px) {
+  .mb-mobile-2 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .mt-mobile-2 {
+    margin-top: 0.5rem !important;
+  }
+  
+  .py-mobile-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+}
+
+/* Text utilities */
+@media (max-width: 768px) {
+  .text-truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .small-mobile {
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Flex utilities */
+@media (max-width: 768px) {
+  .flex-column-mobile {
+    flex-direction: column !important;
+  }
+  
+  .gap-2-mobile {
+    gap: 0.5rem !important;
+  }
+}
+
+/* Shadow utilities */
+@media (max-width: 768px) {
+  .shadow-sm-mobile {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+  }
+} 

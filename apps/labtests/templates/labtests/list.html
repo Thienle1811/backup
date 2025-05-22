@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Danh sách phiếu xét nghiệm{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0">Danh sách phiếu xét nghiệm</h1>
+    <a href="{% url 'labtests:select_patient' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Tạo phiếu xét nghiệm
+    </a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Loại xét nghiệm</th>
+              <th>Bệnh nhân</th>
+              <th>Nhân sự thực hiện</th>
+              <th>Ngày tạo</th>
+              <th class="text-end">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lt in page_obj %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-info bg-opacity-10 text-info rounded-circle p-2 me-2">
+                    <i class="bi bi-beaker"></i>
+                  </div>
+                  {{ lt.category.name }}
+                </div>
+              </td>
+              <td>{{ lt.patient.full_name }}</td>
+              <td>{{ lt.created_by.get_full_name|default:lt.created_by.username }}</td>
+              <td>{{ lt.created_at|date:"d/m/Y H:i" }}</td>
+              <td class="text-end">
+                <a href="{% url 'labtests:detail' lt.id %}" 
+                   class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="bi bi-beaker d-block mb-2" style="font-size: 2rem;"></i>
+                  Chưa có phiếu xét nghiệm nào.
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% include "partials/pagination.html" with page_obj=page_obj %}
+</div>
+
+{% block extra_css %}
+<style>
+  .avatar-sm {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  @media (max-width: 768px) {
+    .table td, .table th {
+      white-space: nowrap;
+    }
+  }
+</style>
+{% endblock %}
+{% endblock %} 

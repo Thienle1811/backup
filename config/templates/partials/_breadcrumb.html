@@ -1,0 +1,8 @@
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item">
+      <a href="{% url 'dashboard:home' %}">Dashboard</a>
+    </li>
+    {% block bc_extra %}{% endblock %}
+  </ol>
+</nav>

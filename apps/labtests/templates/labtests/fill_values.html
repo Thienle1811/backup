@@ -1,0 +1,38 @@
+<!-- Updated templates/labtests/fill_values.html (preserve CSS) -->
+{% extends "base.html" %}
+{% block title %}Nhập giá trị{% endblock %}
+{% block content %}
+<h1 class="h4">Nhập giá trị – {{ category.name }}</h1>
+<p class="mb-2"><strong>Bệnh nhân:</strong> {{ patient.full_name }}</p>
+<form method="post">
+  {% csrf_token %}
+  {{ formset.management_form }}
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th>Mục xét nghiệm</th>
+          <th>Kết quả</th>
+          <th>Khoảng tham chiếu</th>
+          <th>Đơn vị</th>
+          <th>Ghi chú</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item, form in combo %}
+          <tr>
+            <td class="w-40">{{ item.name }}</td>
+            <td class="w-25">{{ form.value }}</td>
+            <td>{{ item.reference_range }}</td>
+            <td class="text-nowrap">{{ item.unit }}</td>
+            <td>{{ form.comment }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <button type="submit" class="btn btn-success w-100 mt-3">
+    <i class="bi bi-check-circle"></i> Lưu phiếu
+  </button>
+</form>
+{% endblock %}

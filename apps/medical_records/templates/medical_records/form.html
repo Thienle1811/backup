@@ -1,0 +1,98 @@
+{# templates/medical_records/form.html #}
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+    <li class="breadcrumb-item">
+      <a href="{% url 'patients:detail' patient.id %}">{{ patient.full_name }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-4">
+            <div class="flex-shrink-0">
+              <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                <i class="bi bi-file-earmark-medical" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h2 class="h5 mb-1">{{ title }}</h2>
+              <p class="text-muted small mb-0">{{ patient.full_name }}</p>
+            </div>
+          </div>
+
+          <form method="post" novalidate class="needs-validation">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+              {{ form.record_date|as_crispy_field }}
+            </div>
+
+            <div class="mb-4">
+              {{ form.diagnosis|as_crispy_field }}
+            </div>
+
+            <div class="mb-4">
+              {{ form.notes|as_crispy_field }}
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+              {% if record %}
+                <a href="{% url 'medical_records:detail' record.id %}" 
+                   class="btn btn-outline-secondary flex-grow-1">
+                  <i class="bi bi-x-lg me-1"></i> Hủy
+                </a>
+              {% else %}
+                <a href="{% url 'patients:detail' patient.id %}" 
+                   class="btn btn-outline-secondary flex-grow-1">
+                  <i class="bi bi-x-lg me-1"></i> Hủy
+                </a>
+              {% endif %}
+              <button type="submit" class="btn btn-success flex-grow-1">
+                <i class="bi bi-save2 me-1"></i> Lưu bệnh án
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_css %}
+<style>
+  .avatar {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  @media (max-width: 768px) {
+    .form-label {
+      margin-bottom: 0.25rem;
+    }
+    .form-control {
+      font-size: 16px;
+    }
+    textarea.form-control {
+      min-height: 100px;
+    }
+  }
+</style>
+{% endblock %}
+{% endblock %}

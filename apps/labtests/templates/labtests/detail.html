@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết phiếu xét nghiệm{% endblock %}
+
+{% block header %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'labtests:list' %}">Danh sách phiếu xét nghiệm</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Chi tiết phiếu xét nghiệm</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0">Chi tiết phiếu xét nghiệm</h1>
+    <div class="d-flex gap-2">
+      <a href="{% url 'labtests:update' labtest.id %}" class="btn btn-primary">
+        <i class="bi bi-pencil-square me-1"></i> Cập nhật
+      </a>
+      <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" name="export_word" class="btn btn-outline-success">
+          <i class="bi bi-file-earmark-word me-1"></i> Xuất Word
+        </button>
+      </form>
+      {% if labtest.medical_record %}
+      <a href="{% url 'medical_records:detail' labtest.medical_record.id %}" class="btn btn-secondary">
+        <i class="bi bi-file-text me-1"></i> Về bệnh án
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Thông tin cơ bản -->
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title h6 mb-3">Thông tin cơ bản</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Bệnh nhân</dt>
+            <dd class="col-sm-8">{{ labtest.patient.full_name }}</dd>
+
+            <dt class="col-sm-4">Loại xét nghiệm</dt>
+            <dd class="col-sm-8">{{ labtest.category.name }}</dd>
+
+            <dt class="col-sm-4">Ngày tạo</dt>
+            <dd class="col-sm-8">{{ labtest.created_at|date:"d/m/Y H:i" }}</dd>
+
+            <dt class="col-sm-4">Người tạo</dt>
+            <dd class="col-sm-8">{{ labtest.created_by.get_full_name|default:labtest.created_by.username }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kết quả xét nghiệm -->
+    <div class="col-12 col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title h6 mb-3">Kết quả xét nghiệm</h5>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Chỉ số</th>
+                  <th>Giá trị</th>
+                  <th>Đơn vị</th>
+                  <th>Khoảng tham chiếu</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for result in results %}
+                <tr>
+                  <td>{{ result.item.name }}</td>
+                  <td>{{ result.value }}</td>
+                  <td>{{ result.item.unit }}</td>
+                  <td>{{ result.item.reference_range }}</td>
+                  <td>{{ result.comment|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-4">
+                    <div class="text-muted">
+                      <i class="bi bi-beaker d-block mb-2" style="font-size: 2rem;"></i>
+                      Chưa có kết quả xét nghiệm.
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_css %}
+<style>
+  @media (max-width: 768px) {
+    .d-flex.gap-2 {
+      flex-direction: column;
+      width: 100%;
+    }
+    .d-flex.gap-2 .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+{% endblock %}
