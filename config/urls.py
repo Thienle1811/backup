@@ -17,14 +17,16 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from .views import health
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
     path("patients/", include("apps.patients.urls")),
     path("medical-records/", include("apps.medical_records.urls")),
-    path("dashboard/", include("apps.dashboard.urls")),
+    path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
     path("labtests/", include("apps.labtests.urls")),
     path("reports/", include("apps.reports.urls", namespace="reports")), 
-    path("", include("apps.dashboard.urls")),       
+    path("", include("apps.dashboard.urls", namespace="root_dashboard")),       
+    path("health/", health, name="health"),
 ]
