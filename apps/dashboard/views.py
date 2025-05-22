@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 
 # Create your views here.
 from django.contrib.auth.decorators import login_required
@@ -11,6 +12,11 @@ from datetime import datetime, time
 from apps.labtests.models import LabTest
 from apps.patients.models import Patient
 from apps.medical_records.models import MedicalRecord
+
+
+def healthcheck(request):
+    """Simple healthcheck endpoint that returns 200 OK."""
+    return HttpResponse("OK")
 
 
 @login_required
