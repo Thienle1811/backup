@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'apps.labtests',
     'apps.accounts',
     'apps.activity_logs',
+    'apps.reports',
 ]
 
 MIDDLEWARE = [
