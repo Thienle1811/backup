@@ -32,26 +32,27 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
-
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',  # This is essential
+    'django.contrib.staticfiles',
 ]
 
+# Custom User Model - MUST be defined before INSTALLED_APPS
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
 LOCAL_APPS = [
-    'apps.accounts.apps.AccountsConfig',
-    'apps.activity_logs.apps.ActivityLogsConfig',
-    'apps.dashboard.apps.DashboardConfig',
-    'apps.labtests.apps.LabtestsConfig',
-    'apps.medical_records.apps.MedicalRecordsConfig',
-    'apps.patients.apps.PatientsConfig',
-    'apps.reports.apps.ReportsConfig',
+    'apps.accounts',  # Simplified - let Django find the AppConfig
+    'apps.activity_logs',
+    'apps.dashboard',
+    'apps.labtests',
+    'apps.medical_records',
+    'apps.patients',
+    'apps.reports',
 ]
 
 THIRD_PARTY_APPS = [
@@ -77,10 +78,14 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [
+            BASE_DIR / 'config/templates',  # Fixed path
+            BASE_DIR / 'templates',  # Keep both for flexibility
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -91,10 +96,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -102,10 +104,7 @@ DATABASES = {
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -121,22 +120,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'vi'
-
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -149,8 +139,6 @@ STATICFILES_FINDERS = [
 ]
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOCALE_PATHS = [BASE_DIR / 'locale']
@@ -165,6 +153,3 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
-
-# Custom User Model
-AUTH_USER_MODEL = 'accounts.CustomUser'
