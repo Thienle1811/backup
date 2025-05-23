@@ -77,35 +77,50 @@
     </div>
 
     <nav class="bottom-nav">
-        <a href="{% if user.is_authenticated %}{% url 'patients:patient_list' %}{% else %}#{% endif %}" 
+        {# Bệnh nhân - Hiển thị cho tất cả người dùng đã đăng nhập #}
+        {% if user.is_authenticated %}
+        <a href="{% url 'patients:patient_list' %}" 
            class="nav-item {% if request.resolver_match.app_name == 'patients' %}active{% endif %}">
             <i class="fas fa-users"></i>
             <span>Bệnh nhân</span>
         </a>
+        {% endif %}
         
-        <a href="{% if user.is_authenticated %}{% url 'labtests:lab_test_list' %}{% else %}#{% endif %}" 
+        {# Xét nghiệm - Hiển thị cho tất cả người dùng đã đăng nhập #}
+        {% if user.is_authenticated %}
+        <a href="{% url 'labtests:lab_test_list' %}" 
            class="nav-item {% if request.resolver_match.app_name == 'labtests' and request.resolver_match.url_name != 'lab_test_template_list' and request.resolver_match.url_name != 'lab_test_template_create' and request.resolver_match.url_name != 'lab_test_template_update' and request.resolver_match.url_name != 'lab_test_template_delete' %}active{% endif %}">
             <i class="fas fa-vial"></i>
             <span>Xét nghiệm</span>
         </a>
+        {% endif %}
         
-        <a href="{% if user.is_authenticated %}{% url 'medical_records:medical_record_list' %}{% else %}#{% endif %}" 
-            class="nav-item {% if request.resolver_match.app_name == 'search' %}active{% endif %}"> 
+        {# Hồ Sơ Bệnh Án - Hiển thị cho tất cả người dùng đã đăng nhập #}
+        {% if user.is_authenticated %}
+        <a href="{% url 'medical_records:medical_record_list' %}" 
+            class="nav-item {% if request.resolver_match.app_name == 'medical_records' %}active{% endif %}"> 
             <i class="fas fa-search"></i>
             <span>Hồ Sơ Bệnh Án</span>
         </a>
+        {% endif %}
         
-        <a href="{% if user.is_authenticated %}{% url 'home_dashboard' %}{% else %}#{% endif %}" 
+        {# Trang chủ (Dashboard chính) - Chỉ hiển thị cho SUPERUSER #}
+        {% if user.is_superuser %}
+        <a href="{% url 'home_dashboard' %}" 
            class="nav-item {% if request.resolver_match.url_name == 'home_dashboard' or request.resolver_match.view_name == 'apps.dashboard.views.dashboard_view' %}active{% endif %}"> 
             <i class="fas fa-home"></i>
             <span>Trang chủ</span>
         </a>
+        {% endif %}
         
-        <a href="{% if user.is_staff %}{% url 'admin:index' %}{% else %}#{% endif %}" 
-           class="nav-item {% if request.resolver_match.app_name == 'admin' %}active{% endif %}">
+        {# Quản lý (Trang Quản lý hệ thống) - Chỉ hiển thị cho SUPERUSER #}
+        {% if user.is_superuser %}
+        <a href="{% url 'dashboard:system_management_dashboard' %}" 
+           class="nav-item {% if request.resolver_match.view_name == 'apps.dashboard.views.system_management_dashboard_view' %}active{% endif %}">
             <i class="fas fa-cog"></i>
             <span>Quản lý</span>
         </a>
+        {% endif %}
     </nav>
 
     {% block extra_js %}{% endblock extra_js %}

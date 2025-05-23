@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'apps.attachments.apps.AttachmentsConfig',
     'apps.activity_logs.apps.ActivityLogsConfig',
     'apps.dashboard.apps.DashboardConfig',
+    #'apps.system_admin.apps.SystemAdminConfig'
 ]
 
 MIDDLEWARE = [

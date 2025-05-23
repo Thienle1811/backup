@@ -1,0 +1,68 @@
+{# apps/dashboard/templates/dashboard/tabs/_stats_tab.html #}
+{% load i18n %}
+
+<h3 class="text-xl font-semibold text-gray-800 mb-4">{% translate "Thống kê hoạt động" %}</h3>
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <dt class="text-sm font-medium text-gray-500 truncate">
+                {% translate "Tổng số hồ sơ bệnh án" %}
+            </dt>
+            <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                {{ total_medical_records|default:0 }}
+            </dd>
+        </div>
+    </div>
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <dt class="text-sm font-medium text-gray-500 truncate">
+                {% translate "Hồ sơ bệnh án tháng này" %}
+            </dt>
+            <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                {{ medical_records_this_month|default:0 }}
+            </dd>
+        </div>
+    </div>
+    {# Bạn có thể thêm các card thống kê khác ở đây, ví dụ: tổng số bệnh nhân, tổng số lịch hẹn... #}
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <dt class="text-sm font-medium text-gray-500 truncate">
+                {% translate "Tổng số nhân viên" %} {# Ví dụ thêm #}
+            </dt>
+            <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                {{ staff_count|default:0 }} {# Biến này có sẵn nếu active_tab=staff, nếu không bạn cần truyền riêng #}
+            </dd>
+        </div>
+    </div>
+</div>
+
+<h3 class="text-xl font-semibold text-gray-800 mb-4">{% translate "Hoạt động gần đây" %}</h3>
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <ul role="list" class="divide-y divide-gray-200">
+        {% for log in recent_activities %}
+        <li class="px-4 py-4 sm:px-6 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-700 truncate">
+                    <span class="font-medium">{{ log.user.get_full_name|default:log.user.email|default:_("Hệ thống") }}</span>
+                    {{ log.get_action_display|lower }}
+                    {% if log.target_object %}
+                        <span class="text-blue-600">{{ log.target_object|truncatechars:50 }}</span>
+                    {% endif %}
+                </p>
+                <p class="text-xs text-gray-400 ml-2 whitespace-nowrap">{{ log.log_timestamp|date:"H:i, d/m/Y" }}</p>
+            </div>
+            {% if log.details %}
+            <p class="mt-1 text-xs text-gray-500">{{ log.details|truncatewords:25 }}</p>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="px-4 py-4 sm:px-6 text-center text-gray-500">
+            {% translate "Không có hoạt động nào gần đây." %}
+        </li>
+        {% endfor %}
+    </ul>
+    {# Có thể thêm link xem tất cả hoạt động nếu bạn có trang danh sách ActivityLog #}
+    {# <div class="bg-gray-50 px-4 py-4 sm:px-6 text-sm text-right">
+        <a href="{% url 'activity_logs:full_log_list' %}" class="font-medium text-blue-600 hover:text-blue-800"> {% translate "Xem tất cả hoạt động" %} &rarr; </a>
+    </div> #}
+</div>

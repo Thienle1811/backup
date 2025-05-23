@@ -1,0 +1,74 @@
+{# apps/dashboard/templates/dashboard/tabs/_staff_tab.html #}
+{% load i18n %}
+
+<div class="flex justify-between items-center mb-4">
+    <h3 class="text-xl font-semibold text-gray-800">{% translate "Danh sách nhân viên" %} ({{ staff_count|default:0 }})</h3>
+    <a href="{% url 'accounts_admin:user_create_admin' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <i class="fas fa-user-plus mr-2"></i> {% translate "Thêm nhân viên" %}
+    </a>
+</div>
+
+<form method="GET" action="{% url 'dashboard:system_management_dashboard' %}">
+    <input type="hidden" name="tab" value="staff">
+    <div class="mb-4 flex">
+        <input type="text" name="q_staff" value="{{ request.GET.q_staff|default:'' }}" placeholder="{% translate 'Tìm theo email, tên, username...' %}" class="focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-l-md px-3 py-2">
+        <button type="submit" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+            <i class="fas fa-search"></i>
+        </button>
+    </div>
+</form>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <ul role="list" class="divide-y divide-gray-200">
+        {% for staff_member in staff_list %}
+        <li class="px-4 py-4 sm:px-6 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="truncate">
+                    <p class="text-md font-medium text-blue-600 truncate">{{ staff_member.full_name|default:staff_member.email }}</p>
+                    <p class="text-sm text-gray-500 truncate">
+                        {{ staff_member.email }} 
+                        {% if staff_member.username and staff_member.username != staff_member.email %}
+                            ({{ staff_member.username }})
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-gray-400">{% translate "Hoạt động cuối" %}: {{ staff_member.last_login|date:"d/m/Y H:i"|default:_("Chưa từng") }}</p>
+                </div>
+                <div class="ml-2 flex-shrink-0 flex flex-col items-end space-y-1">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        {% if staff_member.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {# Chỗ này đã được sửa lại để an toàn hơn #}
+                        {% if staff_member.get_is_active_display %}
+                            {{ staff_member.get_is_active_display }}
+                        {% else %}
+                            {{ staff_member.is_active|yesno:_("Hoạt động,Vô hiệu hóa") }}
+                        {% endif %}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                        {% if staff_member.is_superuser %}Superuser
+                        {% elif staff_member.is_staff %}Nhân viên
+                        {% else %}Người dùng{% endif %}
+                        {% if staff_member.groups.all %}
+                            ({% for group in staff_member.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %})
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="mt-2 sm:flex sm:justify-end items-center">
+                {# Các action khác nếu có, ví dụ: đặt lại mật khẩu, xem chi tiết hoạt động #}
+                <a href="{% url 'accounts_admin:user_update_admin' staff_member.pk %}" class="text-xs text-indigo-600 hover:text-indigo-900">{% translate "Chỉnh sửa / Phân quyền" %}</a>
+                {% if request.user.pk != staff_member.pk %}
+                <a href="{% url 'accounts_admin:user_delete_admin' staff_member.pk %}" class="text-xs text-red-600 hover:text-red-900 ml-3">{% translate "Xóa" %}</a>
+                {% endif %}
+            </div>
+        </li>
+        {% empty %}
+        <li class="px-4 py-4 sm:px-6 text-center text-gray-500">
+            {% if request.GET.q_staff %}
+                {% translate "Không tìm thấy nhân viên nào khớp với tìm kiếm." %}
+            {% else %}
+                {% translate "Chưa có nhân viên nào trong hệ thống." %}
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>

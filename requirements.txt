@@ -3,3 +3,7 @@ Django==5.2.1
 python-dotenv==1.1.0
 sqlparse==0.5.3
 tzdata==2025.2
+django-crispy-forms>=1.0.0  # Hoặc phiên bản cụ thể bạn cài
+crispy-tailwind>=0.5.0      # Hoặc phiên bản cụ thể bạn cài
+psycopg2-binary>=2.0.0 # Hoặc phiên bản cụ thể bạn cài
+reportlab>=3.0.0 # Hoặc phiên bản cụ thể bạn cài

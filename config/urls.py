@@ -16,9 +16,11 @@ urlpatterns = [
     path('medical-records/', include('apps.medical_records.urls', namespace='medical_records')),
     path('appointments/', include('apps.appointments.urls', namespace='appointments')),
     path('lab-tests/', include('apps.labtests.urls', namespace='labtests')),
+    path('dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
     
     # URL cho quản lý người dùng (admin tự tạo trong app 'accounts')
     path('management/accounts/', include('apps.accounts.urls', namespace='accounts_admin')), 
+    path('activity-logs/', include('apps.activity_logs.urls', namespace='activity_logs')),
 
     # URL cho ĐĂNG NHẬP, ĐĂNG XUẤT (sử dụng view của Django với template tùy chỉnh)
     # Chúng ta định nghĩa login và logout ở đây để có thể tùy chỉnh template_name.

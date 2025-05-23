@@ -1,0 +1,147 @@
+{# apps/activity_logs/templates/activity_logs/full_activity_log_list.html #}
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock title %}
+
+{% block page_header %}
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900">
+            {{ page_title }}
+        </h1>
+        {# Có thể thêm nút hành động khác nếu cần #}
+    </div>
+</header>
+{% endblock page_header %}
+
+{% block content %}
+<main>
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            {% blocktranslate count log_count=total_logs %}Tổng số: {{ log_count }} mục log{% plural %}Tổng số: {{ log_count }} mục log{% endblocktranslate %}
+                            {% if search_query_log %}({% translate "Kết quả cho" %}: "{{ search_query_log }}"){% endif %}
+                        </h3>
+                        <form method="GET" action="{% url 'activity_logs:full_log_list' %}" class="w-full sm:w-auto sm:max-w-md">
+                            <div class="flex rounded-md shadow-sm">
+                                <input type="text" name="q_log" value="{{ search_query_log|default:'' }}" placeholder="{% translate 'Tìm log...' %}" class="focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-l-md px-3 py-2">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200">
+                    {% if logs_page.object_list %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Thời gian" %}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Người dùng" %}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Hành động" %}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Đối tượng" %}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Chi tiết" %}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% translate "Địa chỉ IP" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for log_entry in logs_page.object_list %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log_entry.log_timestamp|date:"d/m/Y H:i:s" }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ log_entry.user.get_full_name|default:log_entry.user.email|default:_("Hệ thống") }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log_entry.get_action_display }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate max-w-xs">
+                                            {% if log_entry.target_object %}
+                                                {{ log_entry.target_object|truncatechars:50 }} 
+                                                <span class="text-xs text-gray-400">({{ log_entry.content_type.model }})</span>
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-md">{{ log_entry.details|truncatewords_html:20|default:"" }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log_entry.ip_address|default:"N/A" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if logs_page.has_other_pages %}
+                            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                                <div class="flex-1 flex justify-between sm:hidden">
+                                    {% if logs_page.has_previous %}
+                                    <a href="?page={{ logs_page.previous_page_number }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"> {% translate "Trước" %} </a>
+                                    {% endif %}
+                                    {% if logs_page.has_next %}
+                                    <a href="?page={{ logs_page.next_page_number }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"> {% translate "Sau" %} </a>
+                                    {% endif %}
+                                </div>
+                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-700">
+                                            {% blocktranslate with start=logs_page.start_index end=logs_page.end_index total=paginator.count %}
+                                            Hiển thị từ {{ start }} đến {{ end }} của {{ total }} kết quả.
+                                            {% endblocktranslate %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                            {% if logs_page.has_previous %}
+                                            <a href="?page={{ logs_page.previous_page_number }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                <span class="sr-only">{% translate "Previous" %}</span>
+                                                <i class="fas fa-chevron-left h-5 w-5"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {# SỬA LỖI PHÂN TRANG Ở ĐÂY #}
+                                            {% for num in logs_page.paginator.page_range %}
+                                                {% if logs_page.number == num %}
+                                                    <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> {{ num }} </a>
+                                                {% elif num > logs_page.number|add:'-3' and num < logs_page.number|add:'3' %}
+                                                    <a href="?page={{ num }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> {{ num }} </a>
+                                                {% elif num == 1 or num == logs_page.paginator.num_pages %}
+                                                    {# Hiển thị trang đầu và trang cuối #}
+                                                    {% if logs_page.number > num|add:'3' and num == 1 %}
+                                                        <a href="?page={{ num }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> {{ num }} </a>
+                                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                                                    {% elif logs_page.number < num|add:'-3' and num == logs_page.paginator.num_pages %}
+                                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                                                        <a href="?page={{ num }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> {{ num }} </a>
+                                                    {% elif num == 1 or num == logs_page.paginator.num_pages %} {# Đảm bảo trang đầu và cuối luôn hiển thị nếu không nằm trong dải gần #}
+                                                         <a href="?page={{ num }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"> {{ num }} </a>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {# KẾT THÚC SỬA LỖI PHÂN TRANG #}
+
+                                            {% if logs_page.has_next %}
+                                            <a href="?page={{ logs_page.next_page_number }}{% if search_query_log %}&q_log={{ search_query_log }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                <span class="sr-only">{% translate "Next" %}</span>
+                                                <i class="fas fa-chevron-right h-5 w-5"></i>
+                                            </a>
+                                            {% endif %}
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="px-4 py-5 sm:p-6 text-center text-gray-500">
+                            {% if search_query_log %}
+                                {% translate "Không tìm thấy mục log nào khớp." %}
+                            {% else %}
+                                {% translate "Chưa có nhật ký hoạt động nào." %}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock content %}
