@@ -10,12 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# Add apps directory to Python path
+import sys
+sys.path.insert(0, str(BASE_DIR))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -41,13 +45,13 @@ DJANGO_APPS = [
 ]
 
 LOCAL_APPS = [
-    'apps.accounts',
-    'apps.activity_logs', 
-    'apps.dashboard',
-    'apps.labtests',
-    'apps.medical_records',
-    'apps.patients',
-    'apps.reports',
+    'apps.accounts.apps.AccountsConfig',
+    'apps.activity_logs.apps.ActivityLogsConfig',
+    'apps.dashboard.apps.DashboardConfig',
+    'apps.labtests.apps.LabtestsConfig',
+    'apps.medical_records.apps.MedicalRecordsConfig',
+    'apps.patients.apps.PatientsConfig',
+    'apps.reports.apps.ReportsConfig',
 ]
 
 THIRD_PARTY_APPS = [
