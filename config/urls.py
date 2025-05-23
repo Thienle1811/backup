@@ -17,7 +17,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from .views import health
+from django.conf import settings
+from django.conf.urls.static import static
+from django.http import HttpResponse
+
+def health_check(request):
+    return HttpResponse("OK")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,5 +33,5 @@ urlpatterns = [
     path("labtests/", include("apps.labtests.urls")),
     path("reports/", include("apps.reports.urls", namespace="reports")), 
     path("", include("apps.dashboard.urls", namespace="root_dashboard")),       
-    path("health/", health, name="health"),
-]
+    path("health/", health_check, name="health_check"),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
