@@ -13,7 +13,12 @@ class Patient(models.Model):
         verbose_name="Họ tên",
         help_text="Nhập họ tên bệnh nhân",
     )
-    phone = models.CharField(max_length=50, verbose_name="Số điện thoại liên hệ")
+    phone = models.CharField(
+        max_length=50, 
+        verbose_name="Số điện thoại liên hệ",
+        blank=True,
+        null=True
+    )
 
     # Tuỳ chọn bổ sung
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Ngày sinh")

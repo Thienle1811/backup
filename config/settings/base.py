@@ -53,6 +53,7 @@ LOCAL_APPS = [
     'apps.medical_records',
     'apps.patients',
     'apps.reports',
+    'apps.landing',  # Added landing app
 ]
 
 THIRD_PARTY_APPS = [

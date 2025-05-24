@@ -32,6 +32,6 @@ urlpatterns = [
     path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
     path("labtests/", include("apps.labtests.urls")),
     path("reports/", include("apps.reports.urls", namespace="reports")), 
-    path("", include("apps.dashboard.urls", namespace="root_dashboard")),       
+    path("", include("apps.landing.urls", namespace="landing")),
     path("health/", health_check, name="health_check"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

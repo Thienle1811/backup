@@ -1,0 +1,69 @@
+{% extends 'landing/base.html' %}
+{% load static %}
+
+{% block title %}Liên hệ - Phòng Khám{% endblock %}
+
+{% block content %}
+<section class="contact">
+    <div class="contact__container">
+        <h1 class="section-title">Liên hệ với chúng tôi</h1>
+        <div class="contact__content">
+            <div class="contact__info">
+                <div class="contact__item">
+                    <h3>Địa chỉ</h3>
+                    <p>Đường số 5, Tổ 17, Khu Vực Bình Thường B</p>
+                    <p>Phường Long Tuyền, Quận Bình Thủy, TPCT</p>
+                </div>
+                <div class="contact__item">
+                    <h3>Điện thoại</h3>
+                    <p>(84) 123-456-789</p>
+                    <p>(84) 987-654-321</p>
+                </div>
+                <div class="contact__item">
+                    <h3>Email</h3>
+                    <p>info@phongkham.com</p>
+                    <p>support@phongkham.com</p>
+                </div>
+                <div class="contact__item">
+                    <h3>Giờ làm việc</h3>
+                    <p>Thứ 2 - Thứ 6: 8:00 - 20:00</p>
+                    <p>Thứ 7: 8:00 - 17:00</p>
+                    <p>Chủ nhật: Nghỉ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="map">
+    <div class="map__container">
+        <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4241674814927!2d106.6986!3d10.7756!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTDCsDQ2JzMyLjEiTiAxMDbCsDQxJzU0LjkiRQ!5e0!3m2!1svi!2s!4v1234567890"
+            width="100%"
+            height="450"
+            style="border:0;"
+            allowfullscreen=""
+            loading="lazy">
+        </iframe>
+    </div>
+</section>
+
+{% block extra_css %}
+<style>
+    .contact__info {
+        text-align: center;
+    }
+    .contact__item {
+        margin-bottom: 2rem;
+    }
+    .contact__item h3 {
+        margin-bottom: 1rem;
+        color: var(--text-color);
+    }
+    .contact__item p {
+        color: var(--light-text);
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+{% endblock %} 

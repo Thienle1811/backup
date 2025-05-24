@@ -1,0 +1,50 @@
+{% extends 'landing/base.html' %}
+{% load static %}
+
+{% block title %}Giới thiệu - Phòng Khám{% endblock %}
+
+{% block content %}
+<main class="about-main">
+    <div class="about-container">
+        <h1 class="about-title">Giới thiệu về chúng tôi</h1>
+        <div class="about-content">
+            <div class="about-text">
+                <p>Phòng Khám chúng tôi được thành lập với sứ mệnh mang đến dịch vụ chăm sóc sức khỏe chất lượng cao cho cộng đồng. Với đội ngũ y bác sĩ giàu kinh nghiệm và trang thiết bị hiện đại, chúng tôi cam kết mang đến trải nghiệm khám chữa bệnh tốt nhất cho mọi bệnh nhân.</p>
+                <p>Chúng tôi tự hào về:</p>
+                <ul>
+                    <li>Đội ngũ y bác sĩ chuyên môn cao, giàu kinh nghiệm</li>
+                    <li>Hệ thống trang thiết bị y tế hiện đại</li>
+                    <li>Quy trình khám chữa bệnh chuyên nghiệp</li>
+                    <li>Dịch vụ chăm sóc bệnh nhân tận tâm</li>
+                </ul>
+            </div>
+            <div class="about-image">
+                <img src="{% static 'landing/images/phòng khám.jpg' %}" alt="Phòng khám">
+            </div>
+        </div>
+    </div>
+</main>
+
+<section class="team-section">
+    <div class="team-container">
+        <h2 class="team-title">Đội ngũ chuyên gia</h2>
+        <div class="team-grid">
+            <div class="team-member">
+                <img src="{% static 'landing/images/bác sĩ.jpg' %}" alt="Bác sĩ">
+                <h3>BS. Nguyễn Văn A</h3>
+                <p>Chuyên khoa Nội tổng quát</p>
+            </div>
+            <div class="team-member">
+                <img src="{% static 'landing/images/bác sĩ.jpg' %}" alt="Bác sĩ">
+                <h3>BS. Trần Thị B</h3>
+                <p>Chuyên khoa Nhi</p>
+            </div>
+            <div class="team-member">
+                <img src="{% static 'landing/images/bác sĩ.jpg' %}" alt="Bác sĩ">
+                <h3>BS. Lê Văn C</h3>
+                <p>Chuyên khoa Tai Mũi Họng</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

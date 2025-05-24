@@ -6,6 +6,8 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.http import FileResponse
 import os
+import tempfile
+import shutil
 
 from apps.patients.models import Patient
 from .models import TestCategory, LabTest, LabTestResultValue
@@ -95,14 +97,38 @@ def labtest_detail(request, pk):
     )
     if request.method == "POST" and "export_word" in request.POST:
         try:
+            # Create a temporary directory
+            temp_dir = tempfile.mkdtemp()
+            temp_file = os.path.join(temp_dir, f"labtest_{labtest.id}.docx")
+            
+            # Export to temporary file
             filename = export_labtest_to_word(labtest)
-            response = FileResponse(open(filename, 'rb'), as_attachment=True)
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            os.remove(filename)
+            shutil.move(filename, temp_file)
+            
+            # Create response with file iterator
+            def file_iterator():
+                with open(temp_file, 'rb') as f:
+                    while chunk := f.read(8192):
+                        yield chunk
+                # Clean up after sending
+                try:
+                    os.remove(temp_file)
+                    os.rmdir(temp_dir)
+                except Exception as e:
+                    print(f"Error cleaning up temporary files: {str(e)}")
+            
+            response = FileResponse(
+                file_iterator(),
+                as_attachment=True,
+                filename=f"labtest_{labtest.id}.docx",
+                content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
             return response
+            
         except Exception as e:
             messages.error(request, f'Lỗi khi xuất file: {str(e)}')
             return redirect('labtests:detail', pk=pk)
+            
     results = labtest.results.select_related("item")
     return render(
         request, "labtests/detail.html", {"labtest": labtest, "results": results}

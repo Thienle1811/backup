@@ -67,6 +67,8 @@ class MedicalRecord(TimeStampedModel):
         settings.AUTH_USER_MODEL,
         related_name="medical_records",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         verbose_name="Bác sĩ",
     )
     record_date = models.DateField(default=timezone.now, verbose_name="Ngày khám")

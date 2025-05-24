@@ -1,0 +1,72 @@
+{% extends 'landing/base.html' %}
+{% load static %}
+
+{% block title %}Trang chủ - Y Khoa Ung Bướu{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero__background">
+        <img src="{% static 'landing/images/hero.png' %}" alt="Hero background">
+    </div>
+</section>
+
+<section class="features">
+    <div class="features__container">
+        <div class="feature">
+            <div class="feature__icon">
+                <img src="{% static 'landing/images/icon-doctor.svg' %}" alt="Bác sĩ">
+            </div>
+            <h3>Đội ngũ chuyên môn cao</h3>
+            <p>Đội ngũ y bác sĩ giàu kinh nghiệm, tận tâm với nghề</p>
+        </div>
+        <div class="feature">
+            <div class="feature__icon">
+                <img src="{% static 'landing/images/icon-equipment.svg' %}" alt="Trang thiết bị">
+            </div>
+            <h3>Trang thiết bị hiện đại</h3>
+            <p>Hệ thống máy móc, trang thiết bị y tế tiên tiến</p>
+        </div>
+        <div class="feature">
+            <div class="feature__icon">
+                <img src="{% static 'landing/images/icon-service.svg' %}" alt="Dịch vụ">
+            </div>
+            <h3>Dịch vụ toàn diện</h3>
+            <p>Đa dạng các dịch vụ khám chữa bệnh, chăm sóc sức khỏe</p>
+        </div>
+    </div>
+</section>
+
+<section class="services-preview">
+    <div class="services-preview__container">
+        <h2 class="section-title">Dịch vụ nổi bật</h2>
+        <div class="services-preview__grid">
+            <div class="service-card">
+                <img src="{% static 'landing/images/khám tổng quát.jpg' %}" alt="Khám tổng quát">
+                <h3>Khám tổng quát</h3>
+                <p>Kiểm tra sức khỏe toàn diện, phát hiện sớm các bệnh lý</p>
+                <a href="{% url 'landing:services' %}" class="btn btn--text">Tìm hiểu thêm</a>
+            </div>
+            <div class="service-card">
+                <img src="{% static 'landing/images/tư vấn dinh dưỡng.jpg' %}" alt="Tư vấn dinh dưỡng">
+                <h3>Tư vấn dinh dưỡng</h3>
+                <p>Xây dựng chế độ ăn khoa học, phù hợp với từng người</p>
+                <a href="{% url 'landing:services' %}" class="btn btn--text">Tìm hiểu thêm</a>
+            </div>
+            <div class="service-card">
+                <img src="{% static 'landing/images/vật lý trị liệu.png' %}" alt="Vật lý trị liệu">
+                <h3>Vật lý trị liệu</h3>
+                <p>Phục hồi chức năng, điều trị các bệnh lý cơ xương khớp</p>
+                <a href="{% url 'landing:services' %}" class="btn btn--text">Tìm hiểu thêm</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="cta__container">
+        <h2>Đặt lịch khám ngay hôm nay</h2>
+        <p>Nhận tư vấn miễn phí từ đội ngũ chuyên gia của chúng tôi</p>
+        <a href="{% url 'landing:contact' %}" class="btn btn--primary">Liên hệ ngay</a>
+    </div>
+</section>
+{% endblock %} 

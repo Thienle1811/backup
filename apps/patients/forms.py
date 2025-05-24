@@ -65,5 +65,4 @@ class PatientForm(forms.ModelForm):
         }
         error_messages = {
             "full_name": {"required": "Trường họ tên không được bỏ trống."},
-            "phone": {"required": "Trường số điện thoại không được bỏ trống."},
         }

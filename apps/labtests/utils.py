@@ -81,7 +81,7 @@ def export_labtest_to_word(labtest):
     
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    add_right_text(p, f"Ngày đăng ký: {labtest.created_at.strftime('%d/%m/%Y - %H:%M')}", size=12)
+    add_right_text(p, f"Ngày đăng ký: {labtest.created_at.strftime('%d/%m/%Y - %H:%M') if labtest.created_at else 'N/A'}", size=12)
     
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -97,7 +97,7 @@ def export_labtest_to_word(labtest):
     add_left_text(p, f"Họ tên: {labtest.patient.full_name}", size=12)
     
     p = doc.add_paragraph()
-    add_left_text(p, f"Ngày tháng năm sinh: {labtest.patient.date_of_birth.strftime('%d/%m/%Y')}", size=12)
+    add_left_text(p, f"Ngày tháng năm sinh: {labtest.patient.date_of_birth.strftime('%d/%m/%Y') if labtest.patient.date_of_birth else 'N/A'}", size=12)
 
     # Bảng kết quả
     table = doc.add_table(rows=1, cols=4)
@@ -163,4 +163,9 @@ def export_labtest_to_word(labtest):
     # Lưu file
     filename = f"labtest_{labtest.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
     doc.save(filename)
+    
+    # Update last print date
+    labtest.last_print_date = datetime.now()
+    labtest.save()
+    
     return filename 

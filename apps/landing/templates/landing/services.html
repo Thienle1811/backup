@@ -1,0 +1,88 @@
+{% extends 'landing/base.html' %}
+{% load static %}
+
+{% block title %}Dịch vụ - Phòng Khám{% endblock %}
+
+{% block content %}
+<main class="services-main">
+    <div class="services-container">
+        <header class="services-header">
+            <h1 class="services-title">
+                BẢNG GIÁ DỊCH VỤ KỸ THUẬT XÉT NGHIỆM
+            </h1>
+        </header>
+
+        <div class="services-content">
+            <!-- Table controls -->
+            <div class="table-controls">
+                <div class="table-controls-left">
+                    <label>Hiển thị</label>
+                    <select>
+                        <option>10</option>
+                        <option>25</option>
+                        <option>50</option>
+                        <option>100</option>
+                    </select>
+                    <span> dòng</span>
+                </div>
+                <div class="table-controls-right">
+                    <label>Tìm kiếm:</label>
+                    <input type="text" />
+                </div>
+            </div>
+
+            <!-- Table -->
+            <table class="services-table">
+                <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th class="col-name">Danh Mục Kỹ Thuật</th>
+                        <th class="col-price">Giá (VNĐ)</th>
+                        <th class="col-note">Ghi Chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>XN. 17-OH Progresterone</td>
+                        <td>250.000</td>
+                        <td>Nhóm miễn dịch - Thời gian trả kết quả từ 2 - 3 ngày</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>XN. AFP (Alpha Fetoprotein)</td>
+                        <td>180.000</td>
+                        <td>Nhóm miễn dịch - Thời gian trả kết quả từ 2 - 3 ngày</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>XN. Anti HCV</td>
+                        <td>150.000</td>
+                        <td>Nhóm miễn dịch - Thời gian trả kết quả từ 2 - 3 ngày</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div class="pagination-info">
+                <p>Đang hiển thị từ 1 đến 3 trong 336 dòng</p>
+            </div>
+            <nav class="pagination-nav">
+                <ul class="pagination-list">
+                    <li><a href="#" class="pagination-prev">Previous</a></li>
+                    <li><a href="#" class="pagination-active">1</a></li>
+                    <li><a href="#">2</a></li>
+                    <li><a href="#">3</a></li>
+                    <li><a href="#">4</a></li>
+                    <li><a href="#">5</a></li>
+                    <li><span class="pagination-ellipsis">...</span></li>
+                    <li><a href="#">23</a></li>
+                    <li><a href="#" class="pagination-next">Next</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</main>
+{% endblock %} 

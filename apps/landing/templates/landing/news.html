@@ -1,0 +1,52 @@
+{% extends 'landing/base.html' %}
+{% load static %}
+
+{% block title %}Tin tức - Phòng Khám{% endblock %}
+
+{% block content %}
+<section class="news">
+    <div class="news__container">
+        <h1 class="section-title">Tin tức & Sự kiện</h1>
+        <div class="news__grid">
+            <article class="news-card">
+                <img src="{% static 'landing/images/tin tức 1.jpg' %}" alt="Tin tức">
+                <div class="news-card__content">
+                    <div class="news-card__date">15/03/2024</div>
+                    <h3>Phòng khám triển khai dịch vụ khám sức khỏe doanh nghiệp</h3>
+                    <p>Chúng tôi vui mừng thông báo về việc triển khai dịch vụ khám sức khỏe doanh nghiệp, giúp các công ty chăm sóc sức khỏe nhân viên một cách toàn diện.</p>
+                    <a href="#" class="btn btn--text">Đọc thêm</a>
+                </div>
+            </article>
+            <article class="news-card">
+                <img src="{% static 'landing/images/tin tức 2.jpg' %}" alt="Tin tức">
+                <div class="news-card__content">
+                    <div class="news-card__date">10/03/2024</div>
+                    <h3>Hội thảo "Phòng và điều trị bệnh tim mạch"</h3>
+                    <p>Phòng khám tổ chức hội thảo chuyên đề về phòng và điều trị bệnh tim mạch, với sự tham gia của các chuyên gia hàng đầu.</p>
+                    <a href="#" class="btn btn--text">Đọc thêm</a>
+                </div>
+            </article>
+            <article class="news-card">
+                <img src="{% static 'landing/images/tin tức 3.jfif' %}" alt="Tin tức">
+                <div class="news-card__content">
+                    <div class="news-card__date">05/03/2024</div>
+                    <h3>Phòng khám được trang bị máy MRI mới</h3>
+                    <p>Chúng tôi vừa được trang bị máy chụp cộng hưởng từ (MRI) thế hệ mới, giúp nâng cao chất lượng chẩn đoán và điều trị.</p>
+                    <a href="#" class="btn btn--text">Đọc thêm</a>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="newsletter">
+    <div class="newsletter__container">
+        <h2>Đăng ký nhận tin</h2>
+        <p>Nhận thông tin mới nhất về sức khỏe và các chương trình khuyến mãi</p>
+        <form class="newsletter__form">
+            <input type="email" placeholder="Nhập email của bạn" required>
+            <button type="submit" class="btn btn--primary">Đăng ký</button>
+        </form>
+    </div>
+</section>
+{% endblock %} 

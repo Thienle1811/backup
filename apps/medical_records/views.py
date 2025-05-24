@@ -14,6 +14,7 @@ from .forms import MedicalRecordForm
 from apps.activity_logs.models import log_activity
 from .forms import AttachLabTestForm
 from apps.labtests.models import LabTest
+from django.contrib.auth import get_user_model
 
 
 # danh sách
@@ -44,20 +45,27 @@ def select_patient(request):
 def record_create(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     form = MedicalRecordForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        mr = form.save(commit=False)
-        mr.patient = patient
-        mr.created_by = request.user
-        mr.save()
-        log_activity(request.user, mr, "create", "Tạo bệnh án")
+    
+    if request.method == "POST":
+        if form.is_valid():
+            mr = form.save(commit=False)
+            mr.patient = patient
+            mr.created_by = request.user
+            mr.save()
+            log_activity(request.user, mr, "create", "Tạo bệnh án")
 
-        if mr.unlinked_labtests.exists():
-            # 👉 ngay sau khi tạo, chuyển sang màn hình Gắn phiếu
-            messages.info(request, "Bệnh nhân còn phiếu xét nghiệm chưa gắn.")
-            return redirect("medical_records:attach_labtests", pk=mr.pk)
+            if mr.unlinked_labtests.exists():
+                # 👉 ngay sau khi tạo, chuyển sang màn hình Gắn phiếu
+                messages.info(request, "Bệnh nhân còn phiếu xét nghiệm chưa gắn.")
+                return redirect("medical_records:attach_labtests", pk=mr.pk)
 
-        messages.success(request, "Đã tạo bệnh án thành công!")
-        return redirect("medical_records:detail", pk=mr.pk)
+            messages.success(request, "Đã tạo bệnh án thành công!")
+            return redirect("medical_records:detail", pk=mr.pk)
+        else:
+            # Add form errors to messages
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
 
     return render(
         request,
