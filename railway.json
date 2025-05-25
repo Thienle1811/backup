@@ -7,7 +7,8 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "startCommand": "DJANGO_ENV=production python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT",
+    "preDeployCommand": "mkdir -p /tmp/staticfiles",
+    "startCommand": "export DJANGO_ENV=production && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT",
     "limitOverride": {
       "containers": {
         "cpu": 1,
@@ -15,9 +16,6 @@
       }
     },
     "healthcheckPath": "/health/",
-    "preDeployCommand": [
-      "mkdir -p /tmp/staticfiles"
-    ],
     "sleepApplication": true,
     "multiRegionConfig": {
       "asia-southeast1-eqsg3a": {
