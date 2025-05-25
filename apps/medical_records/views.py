@@ -7,6 +7,7 @@ from django.urls import reverse
 from .utils import export_medicalrecord_to_word
 from django.http import FileResponse
 import os
+from django.db import models
 
 from apps.patients.models import Patient
 from .models import MedicalRecord
@@ -17,12 +18,41 @@ from apps.labtests.models import LabTest
 from django.contrib.auth import get_user_model
 
 
-# danh sách
+# List view
 @login_required
 def record_list(request):
-    qs = MedicalRecord.objects.select_related("patient").all()
-    page_obj = Paginator(qs, 15).get_page(request.GET.get("page"))
-    return render(request, "medical_records/list.html", {"page_obj": page_obj})
+    # Get filter parameters
+    q = request.GET.get('q', '').strip()
+    sort = request.GET.get('sort', '-record_date')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+
+    # Base queryset
+    qs = MedicalRecord.objects.select_related('patient', 'doctor', 'created_by')
+
+    # Apply search filter
+    if q:
+        qs = qs.filter(
+            models.Q(patient__full_name__icontains=q) |
+            models.Q(diagnosis__icontains=q) |
+            models.Q(notes__icontains=q)
+        )
+
+    # Apply date range filter
+    if date_from:
+        qs = qs.filter(record_date__gte=date_from)
+    if date_to:
+        qs = qs.filter(record_date__lte=date_to)
+
+    # Apply sorting
+    qs = qs.order_by(sort)
+
+    # Pagination
+    page_obj = Paginator(qs, 15).get_page(request.GET.get('page'))
+
+    return render(request, 'medical_records/list.html', {
+        'page_obj': page_obj,
+    })
 
 
 # bước 1: chọn bệnh nhân (+ optional preselect)

@@ -4,8 +4,8 @@
 {% block content %}
 <div class="container-fluid px-2 px-md-4">
   <!-- Welcome Section -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+    <div class="mb-3 mb-md-0">
       <h1 class="h4 mb-1">Xin chào, {{ request.user.get_full_name|default:request.user.username }}</h1>
       <p class="text-muted small mb-0">Đây là tổng quan về hoạt động của phòng khám</p>
     </div>
@@ -113,6 +113,7 @@
               <th>Bệnh nhân</th>
               <th>Nhân sự thực hiện</th>
               <th>Thời gian cập nhật</th>
+              <th class="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -129,10 +130,22 @@
               <td>{{ lt.patient.full_name }}</td>
               <td>{{ lt.created_by.get_full_name|default:lt.created_by.username }}</td>
               <td>{{ lt.updated_at|date:"d/m/Y H:i" }}</td>
+              <td class="text-end">
+                <a href="{% url 'labtests:detail' lt.id %}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();" title="Xem chi tiết">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <form action="{% url 'labtests:detail' lt.id %}" method="post" class="d-inline" onclick="event.stopPropagation();">
+                  {% csrf_token %}
+                  <input type="hidden" name="export_word" value="1">
+                  <button type="submit" class="btn btn-sm btn-outline-success" title="Xuất Word">
+                    <i class="bi bi-file-earmark-word"></i>
+                  </button>
+                </form>
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="4" class="text-center py-4">
+              <td colspan="5" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-beaker d-block mb-2" style="font-size: 2rem;"></i>
                   Chưa có phiếu xét nghiệm nào.
@@ -165,6 +178,7 @@
               <th>Chẩn đoán</th>
               <th>Ngày khám</th>
               <th>Nhân sự thực hiện</th>
+              <th class="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -181,10 +195,18 @@
               <td>{{ mr.diagnosis|truncatechars:50 }}</td>
               <td>{{ mr.record_date|date:"d/m/Y" }}</td>
               <td>{{ mr.created_by.get_full_name|default:mr.created_by.username }}</td>
+              <td class="text-end">
+                <a href="{% url 'medical_records:detail' mr.id %}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();" title="Xem chi tiết">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'medical_records:record_word' mr.id %}" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();" title="Xuất Word">
+                  <i class="bi bi-file-earmark-word"></i>
+                </a>
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="4" class="text-center py-4">
+              <td colspan="5" class="text-center py-4">
                 <div class="text-muted">
                   <i class="bi bi-file-earmark-medical d-block mb-2" style="font-size: 2rem;"></i>
                   Chưa có bệnh án nào.

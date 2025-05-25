@@ -5,60 +5,216 @@ Danh sách bệnh án
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h4 mb-0">Danh sách bệnh án</h1>
-  <a href="{% url 'medical_records:select_patient' %}" class="btn btn-primary">
-    <i class="bi bi-plus-lg me-1"></i> Tạo bệnh án
-  </a>
-</div>
+<div class="container-fluid px-2 px-md-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0">Danh sách bệnh án</h1>
+    <a href="{% url 'medical_records:select_patient' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Tạo bệnh án
+    </a>
+  </div>
 
-<div class="table-responsive shadow-sm rounded">
-  <table class="table table-hover mb-0">
-    <thead class="table-light">
-      <tr>
-        <th>Ngày khám</th>
-        <th>Bệnh nhân</th>
-        <th>Chẩn đoán</th>
-        <th class="text-end">Hành động</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in page_obj.object_list %}
-        <tr
-          class="clickable-row"
-          style="cursor: pointer"
-          onclick="window.location.href='{% url 'medical_records:detail' r.pk %}'"
-        >
-          <td>{{ r.record_date|date:"d/m/Y" }}</td>
-          <td>{{ r.patient.full_name }}</td>
-          <td>{{ r.diagnosis|truncatechars:40 }}</td>
-          <td class="text-end">
-            <a
-              href="{% url 'medical_records:edit' r.pk %}"
-              class="btn btn-sm btn-outline-secondary me-1"
-              onclick="event.stopPropagation();"
-              title="Chỉnh sửa"
-            >
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a
-              href="{% url 'medical_records:detail' r.pk %}"
-              class="btn btn-sm btn-outline-primary"
-              onclick="event.stopPropagation();"
-              title="Xem chi tiết"
-            >
-              <i class="bi bi-eye"></i>
-            </a>
-          </td>
-        </tr>
+  <!-- Search and Filter Section -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3">
+        <!-- Search -->
+        <div class="col-12 col-md-4">
+          <label class="form-label small text-muted">Tìm kiếm</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Tên bệnh nhân, chẩn đoán...">
+          </div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="col-12 col-md-6">
+          <label class="form-label small text-muted">Khoảng thời gian</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light">
+              <i class="bi bi-calendar"></i>
+            </span>
+            <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="form-control" placeholder="Từ ngày">
+            <span class="input-group-text bg-light">đến</span>
+            <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="form-control" placeholder="Đến ngày">
+          </div>
+        </div>
+
+        <!-- Sort -->
+        <div class="col-12 col-md-2">
+          <label class="form-label small text-muted">Sắp xếp</label>
+          <select name="sort" class="form-select">
+            <option value="-record_date" {% if request.GET.sort == '-record_date' %}selected{% endif %}>Mới nhất</option>
+            <option value="record_date" {% if request.GET.sort == 'record_date' %}selected{% endif %}>Cũ nhất</option>
+            <option value="patient__full_name" {% if request.GET.sort == 'patient__full_name' %}selected{% endif %}>Tên bệnh nhân A-Z</option>
+            <option value="-patient__full_name" {% if request.GET.sort == '-patient__full_name' %}selected{% endif %}>Tên bệnh nhân Z-A</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel me-1"></i> Lọc
+          </button>
+          {% if request.GET.q or request.GET.date_from or request.GET.date_to or request.GET.sort %}
+          <a href="{% url 'medical_records:list' %}" class="btn btn-outline-secondary ms-2">
+            <i class="bi bi-x-lg me-1"></i> Xóa bộ lọc
+          </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Desktop/Tablet View -->
+  <div class="d-none d-md-block">
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Ngày khám</th>
+                <th>Bệnh nhân</th>
+                <th>Chẩn đoán</th>
+                <th class="text-end">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in page_obj %}
+              <tr class="clickable-row" style="cursor: pointer" onclick="window.location.href='{% url 'medical_records:detail' r.pk %}'">
+                <td>{{ r.record_date|date:"d/m/Y" }}</td>
+                <td>{{ r.patient.full_name }}</td>
+                <td>{{ r.diagnosis|truncatechars:40 }}</td>
+                <td class="text-end">
+                  <a href="{% url 'medical_records:edit' r.pk %}" class="btn btn-sm btn-outline-secondary me-1" onclick="event.stopPropagation();" title="Chỉnh sửa">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="{% url 'medical_records:detail' r.pk %}" class="btn btn-sm btn-outline-primary me-1" onclick="event.stopPropagation();" title="Xem chi tiết">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'medical_records:record_word' r.pk %}" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();" title="Xuất Word">
+                    <i class="bi bi-file-earmark-word"></i>
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-4">
+                  <div class="text-muted">
+                    <i class="bi bi-file-earmark-medical d-block mb-2" style="font-size: 2rem;"></i>
+                    Chưa có bệnh án nào.
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile View -->
+  <div class="d-md-none">
+    <div class="row g-4">
+      {% for r in page_obj %}
+      <div class="col-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-2">
+                <i class="bi bi-file-earmark-medical"></i>
+              </div>
+              <h5 class="card-title mb-0">{{ r.patient.full_name }}</h5>
+            </div>
+            <p class="card-text"><strong>Ngày khám:</strong> {{ r.record_date|date:"d/m/Y" }}</p>
+            <p class="card-text"><strong>Chẩn đoán:</strong> {{ r.diagnosis|truncatechars:100 }}</p>
+            <div class="d-flex gap-2">
+              <a href="{% url 'medical_records:edit' r.pk %}" class="btn btn-outline-secondary flex-grow-1">
+                <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+              </a>
+              <a href="{% url 'medical_records:detail' r.pk %}" class="btn btn-outline-primary flex-grow-1">
+                <i class="bi bi-eye me-1"></i> Chi tiết
+              </a>
+              <a href="{% url 'medical_records:record_word' r.pk %}" class="btn btn-outline-success flex-grow-1">
+                <i class="bi bi-file-earmark-word me-1"></i> Word
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
       {% empty %}
-        <tr>
-          <td colspan="4" class="text-center py-3">Chưa có bệnh án.</td>
-        </tr>
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body text-center py-5">
+            <div class="text-muted">
+              <i class="bi bi-file-earmark-medical d-block mb-2" style="font-size: 2rem;"></i>
+              Chưa có bệnh án nào.
+            </div>
+          </div>
+        </div>
+      </div>
       {% endfor %}
-    </tbody>
-  </table>
+    </div>
+  </div>
+
+  {% include "partials/pagination.html" with page_obj=page_obj %}
 </div>
 
-{% include "partials/pagination.html" with page_obj=page_obj %}
+{% block extra_css %}
+<style>
+  .avatar-sm {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    border: none;
+    border-radius: 0.5rem;
+  }
+  .card-body {
+    padding: 1.25rem;
+  }
+  .table > :not(caption) > * > * {
+    padding: 1rem;
+  }
+  .table tbody tr {
+    cursor: pointer;
+  }
+  .table tbody tr:hover {
+    background-color: rgba(0,0,0,.03);
+  }
+  .input-group-text {
+    border: none;
+  }
+  .form-select, .form-control {
+    border-color: #dee2e6;
+  }
+  .form-select:focus, .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  .form-label {
+    margin-bottom: 0.25rem;
+  }
+  @media (max-width: 768px) {
+    .card-title {
+      font-size: 1.1rem;
+    }
+    .card-text {
+      font-size: 0.9rem;
+    }
+    .form-select, .form-control {
+      font-size: 0.9rem;
+    }
+    .form-label {
+      font-size: 0.8rem;
+    }
+  }
+</style>
+{% endblock %}
 {% endblock %}

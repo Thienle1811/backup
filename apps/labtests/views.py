@@ -33,6 +33,20 @@ def select_patient(request):
 @permission_required("labtests.add_labtest", raise_exception=True)
 def select_category(request, patient_id):
     categories = TestCategory.objects.filter(is_active=True).order_by("name")
+    if request.method == "POST":
+        selected_categories = request.POST.getlist("categories")
+        if selected_categories:
+            patient = get_object_or_404(Patient, pk=patient_id)
+            for category_id in selected_categories:
+                category = get_object_or_404(TestCategory, pk=category_id)
+                labtest = LabTest.objects.create(
+                    patient=patient,
+                    category=category,
+                    created_by=request.user,
+                )
+                log_activity(request.user, labtest, "create", "Tạo phiếu xét nghiệm")
+            messages.success(request, "Đã lưu phiếu xét nghiệm thành công!")
+            return redirect("labtests:list")
     return render(
         request,
         "labtests/select_category.html",
@@ -138,13 +152,35 @@ def labtest_detail(request, pk):
 # List view
 @login_required
 def labtest_list(request):
-    qs = (
-        LabTest.objects
-        .select_related('patient', 'category', 'created_by')
-        .order_by('-created_at')
-    )
+    # Get filter parameters
+    q = request.GET.get('q', '').strip()
+    category_id = request.GET.get('category')
+    sort = request.GET.get('sort', '-created_at')
+
+    # Base queryset
+    qs = LabTest.objects.select_related('patient', 'category', 'created_by')
+
+    # Apply search filter
+    if q:
+        qs = qs.filter(patient__full_name__icontains=q)
+
+    # Apply category filter
+    if category_id:
+        qs = qs.filter(category_id=category_id)
+
+    # Apply sorting
+    qs = qs.order_by(sort)
+
+    # Get all categories for filter dropdown
+    categories = TestCategory.objects.filter(is_active=True).order_by('name')
+
+    # Pagination
     page_obj = Paginator(qs, 15).get_page(request.GET.get('page'))
-    return render(request, 'labtests/list.html', {'page_obj': page_obj})
+
+    return render(request, 'labtests/list.html', {
+        'page_obj': page_obj,
+        'categories': categories,
+    })
 
 
 @login_required
@@ -197,3 +233,55 @@ def labtest_update(request, pk):
             "formset": formset,
         },
     )
+
+
+@login_required
+def export_labtest_word(request, pk):
+    """Export lab test to Word document"""
+    labtest = get_object_or_404(
+        LabTest.objects.select_related("patient", "category"), pk=pk
+    )
+    try:
+        # Create a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        temp_file = os.path.join(temp_dir, f"labtest_{labtest.id}.docx")
+        
+        # Export to temporary file
+        filename = export_labtest_to_word(labtest)
+        shutil.move(filename, temp_file)
+        
+        # Create response with file iterator
+        def file_iterator():
+            with open(temp_file, 'rb') as f:
+                while chunk := f.read(8192):
+                    yield chunk
+            # Clean up after sending
+            try:
+                os.remove(temp_file)
+                os.rmdir(temp_dir)
+            except Exception as e:
+                print(f"Error cleaning up temporary files: {str(e)}")
+        
+        # Generate a more descriptive filename
+        patient_name = labtest.patient.full_name.replace(' ', '_')
+        category_name = labtest.category.name.replace(' ', '_')
+        filename = f"{patient_name}_{category_name}_{labtest.created_at.strftime('%Y%m%d')}.docx"
+        
+        response = FileResponse(
+            file_iterator(),
+            as_attachment=True,
+            filename=filename,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        
+        # Add additional headers to ensure proper download
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
+        messages.error(request, f'Lỗi khi xuất file: {str(e)}')
+        return redirect('labtests:detail', pk=pk)

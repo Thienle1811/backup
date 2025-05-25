@@ -3,34 +3,38 @@ import os
 from pathlib import Path
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Temporarily enabled for debugging
+DEBUG = False
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-s82%s1+6o&jcse_3)my^vspflc1$=+#*iqo*d@+=7boo*us3v9')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', SECRET_KEY)
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '.railway.app',
-    'django-server-production-2d8a.up.railway.app',
-    'xn--ykhoaungbucnth-jtd8uv287bx0a.com.vn'
-]
+ALLOWED_HOSTS = ['*']  # Update this with your Railway domain
 
 # Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'postgres'),
-        'USER': os.getenv('PGUSER', 'postgres'),
-        'PASSWORD': os.getenv('PGPASSWORD', ''),
-        'HOST': os.getenv('PGHOST', 'localhost'),
-        'PORT': os.getenv('PGPORT', '5432'),
+        'NAME': os.environ.get('PGDATABASE'),
+        'USER': os.environ.get('PGUSER'),
+        'PASSWORD': os.environ.get('PGPASSWORD'),
+        'HOST': os.environ.get('PGHOST'),
+        'PORT': os.environ.get('PGPORT', '5432'),
     }
 }
 
 # Static files (CSS, JavaScript, Images)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
-STATIC_ROOT = '/tmp/staticfiles'
+
+# Security settings
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Static files (CSS, JavaScript, Images)
 STATICFILES_DIRS = [
     str(BASE_DIR / 'static'),
 ]
@@ -53,16 +57,6 @@ if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
-
-# Security Settings - Temporarily disabled for debugging
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
 
 # Media files
 MEDIA_URL = '/media/'

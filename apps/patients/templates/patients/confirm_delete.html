@@ -1,27 +1,9 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 {% block content %}
-
-<div class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-6">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h2 class="h4 text-center fw-semibold mb-4">{{ title }}</h2>
-        <form method="post" novalidate class="needs-validation" autocomplete="off">
-          {% csrf_token %}
-          {{ form|crispy }}
-          <div class="d-flex justify-content-between mt-4">
-            <a href="{% url 'patients:list' %}" class="btn btn-outline-secondary btn-lg">
-              <i class="bi bi-x-lg me-1"></i> Hủy thay đổi
-            </a>
-            <button type="submit" class="btn btn-success btn-lg">
-              <i class="bi bi-save2 me-1"></i> Lưu thay đổi
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
+<h1>{{ title }}</h1>
+<p>Bạn có chắc muốn xoá <strong>{{ object }}</strong>?</p>
+<form method="post">{% csrf_token %}
+  <button type="submit" class="btn btn-danger">Xoá</button>
+  <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-light">Huỷ</a>
+</form>
 {% endblock %}

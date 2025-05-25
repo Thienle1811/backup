@@ -8,19 +8,19 @@
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body">
         <!-- Back button and title -->
-        <div class="d-flex align-items-center mb-3">
-          <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary btn-sm me-3">
+        <div class="d-flex flex-column flex-md-row align-items-center mb-3">
+          <h2 class="h5 mb-3 mb-md-0 order-2 order-md-1 flex-grow-1 text-center">Chọn bệnh nhân</h2>
+          <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary btn-sm order-1 order-md-2 mb-2 mb-md-0">
             <i class="bi bi-arrow-left me-1"></i> Bảng cập nhật
           </a>
-          <h2 class="h5 mb-0 flex-grow-1 text-center">Chọn bệnh nhân</h2>
         </div>
         <!-- Search form -->
-        <form method="get" class="row g-2">
-          <div class="col-8">
+        <form method="get" class="row g-2 align-items-center">
+          <div class="col">
             <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Tên bệnh nhân hoặc SĐT">
           </div>
-          <div class="col-4">
-            <button type="submit" class="btn btn-primary w-100">
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">
               <i class="bi bi-search me-1"></i> Tìm
             </button>
           </div>
@@ -56,4 +56,24 @@
   </div>
 </div>
 
+{% block extra_css %}
+<style>
+  @media (max-width: 768px) {
+    .btn-outline-secondary {
+      font-size: 0.875rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .form-control {
+      height: 38px;
+    }
+    .btn-primary {
+      height: 38px;
+      padding: 0.25rem 0.75rem;
+    }
+    .order-1 {
+      margin-bottom: 1rem !important;
+    }
+  }
+</style>
+{% endblock %}
 {% endblock %}

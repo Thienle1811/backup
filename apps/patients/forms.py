@@ -42,7 +42,7 @@ class PatientForm(forms.ModelForm):
             "date_of_birth",
             "gender",
             "address",
-            "email",
+            "referring_doctor",
             "blood_type",
             "allergies",
         ]
@@ -50,14 +50,14 @@ class PatientForm(forms.ModelForm):
             "full_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Họ tên"}),
             "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Số điện thoại"}),
             "address": forms.TextInput(attrs={"class": "form-control", "placeholder": "Địa chỉ"}),
-            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email"}),
+            "referring_doctor": forms.TextInput(attrs={"class": "form-control", "placeholder": "Tên bác sĩ chỉ định"}),
             "allergies": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Dị ứng (nếu có)"}),
         }
         labels = {
             "full_name": "Họ và tên",
             "phone": "Số điện thoại",
             "address": "Địa chỉ",
-            "email": "Email",
+            "referring_doctor": "Bác sĩ chỉ định",
             "allergies": "Dị ứng",
         }
         help_texts = {

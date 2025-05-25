@@ -4,10 +4,10 @@ from .models import Patient
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'gender', 'date_of_birth', 'phone', 'email', 'created_at', 'medical_records_count', 'lab_tests_count')
+    list_display = ('id', 'patient_code', 'full_name', 'gender', 'date_of_birth', 'phone', 'referring_doctor', 'created_at', 'medical_records_count', 'lab_tests_count')
     list_filter = ('gender', 'created_at')
-    search_fields = ('full_name', 'phone', 'email', 'address')
-    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('full_name', 'phone', 'patient_code', 'address')
+    readonly_fields = ('patient_code', 'created_at', 'updated_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
 

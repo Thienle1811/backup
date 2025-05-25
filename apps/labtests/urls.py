@@ -18,4 +18,5 @@ urlpatterns = [
     # Detail & Update
     path("<int:pk>/", views.labtest_detail, name="detail"),
     path("<int:pk>/update/", views.labtest_update, name="update"),
+    path("<int:pk>/export-word/", views.export_labtest_word, name="export_word"),
 ]
