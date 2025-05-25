@@ -19,10 +19,29 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.db import connection
+import os
 
 def health_check(request):
-    return HttpResponse("OK")
+    try:
+        # Check database connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            db_status = "OK"
+    except Exception as e:
+        db_status = f"Error: {str(e)}"
+
+    # Check environment
+    env = os.environ.get('DJANGO_ENV', 'Not set')
+    settings_module = os.environ.get('DJANGO_SETTINGS_MODULE', 'Not set')
+
+    return JsonResponse({
+        "status": "OK",
+        "database": db_status,
+        "environment": env,
+        "settings_module": settings_module
+    })
 
 urlpatterns = [
     path("admin/", admin.site.urls),
