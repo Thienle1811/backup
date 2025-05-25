@@ -23,7 +23,7 @@ DATABASES = {
 }
 
 # Static files (CSS, JavaScript, Images)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = '/tmp/staticfiles'
 STATIC_URL = '/static/'
 
 # Security settings
@@ -50,10 +50,7 @@ STATICFILES_FINDERS = [
 ]
 
 # WhiteNoise configuration
-if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
-    security_index = MIDDLEWARE.index('django.middleware.security.SecurityMiddleware')
-    MIDDLEWARE.insert(security_index + 1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
@@ -73,11 +70,11 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',  # Changed to DEBUG level
+        'level': 'DEBUG',
     },
     'django': {
         'handlers': ['console'],
-        'level': 'DEBUG',  # Changed to DEBUG level
+        'level': 'DEBUG',
         'propagate': False,
     },
 }

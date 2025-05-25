@@ -1,14 +1,13 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
+  "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "python manage.py collectstatic --noinput"
+    "builder": "RAILPACK",
+    "buildCommand": "pip install -r requirements.txt"
   },
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "preDeployCommand": "mkdir -p /tmp/staticfiles",
-    "startCommand": "gunicorn config.wsgi:application",
+    "startCommand": "export DJANGO_ENV=production && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT",
     "limitOverride": {
       "containers": {
         "cpu": 1,
@@ -16,6 +15,9 @@
       }
     },
     "healthcheckPath": "/health/",
+    "preDeployCommand": [
+      "mkdir -p /tmp/staticfiles"
+    ],
     "sleepApplication": true,
     "multiRegionConfig": {
       "asia-southeast1-eqsg3a": {
