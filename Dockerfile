@@ -4,6 +4,7 @@ FROM python:3.12-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV DJANGO_ENV=production
 
 # Set work directory
 WORKDIR /app
@@ -22,10 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create staticfiles directory
-RUN mkdir -p staticfiles
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
+RUN mkdir -p /tmp/staticfiles
 
 # Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "config.wsgi:application"] 
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"] 
