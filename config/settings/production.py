@@ -23,7 +23,7 @@ DATABASES = {
 }
 
 # Static files (CSS, JavaScript, Images)
-STATIC_ROOT = '/tmp/staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 # Security settings
@@ -36,7 +36,7 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Static files (CSS, JavaScript, Images)
 STATICFILES_DIRS = [
-    str(BASE_DIR / 'static'),
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 # Make sure staticfiles app is included
