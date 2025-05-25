@@ -1,1 +1,0 @@
-web: gunicorn clinic_manager.wsgi:application 
