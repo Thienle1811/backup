@@ -5,6 +5,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_ENV=production
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
 
 # Set work directory
 WORKDIR /app
@@ -25,5 +26,12 @@ COPY . .
 # Create staticfiles directory
 RUN mkdir -p /tmp/staticfiles
 
-# Run gunicorn
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"] 
+# Create startup script
+RUN echo '#!/bin/bash\n\
+python manage.py migrate\n\
+python manage.py collectstatic --noinput\n\
+gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --log-level debug --access-logfile - --error-logfile -' > /app/start.sh && \
+chmod +x /app/start.sh
+
+# Run startup script
+CMD ["/app/start.sh"] 
